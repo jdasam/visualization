@@ -182,17 +182,20 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 	}
 }
 
+
 function generateVolumeGraph(floatArray, length){
-	var graph = [];
+	var valueArray = [];
+	var alphaArray = [];
 	var arrayLength = floatArray.length;
 	var overlappingSamples = arrayLength/length * 25;
 	var offsetPerX = (arrayLength)/length;
 	var samplesPerX = overlappingSamples;
 
 	for(var i = 0; i<length; i++){
-		graph[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
+		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
+		alphaArray[i] = 0;
 	}
-	return graph;
+	return {value:valueArray, alpha:alphaArray};
 }
 
 function getAverageVolume(floatArray, offset, length){
@@ -242,7 +245,7 @@ function plotGraph(graph, canvas){
     context.beginPath();
     for(var i = 0; i<graph.length; i++){
     	context.moveTo(i,canvas.height);
-    	context.lineTo(i,-graph[i]);
+    	context.lineTo(i,-graph.value[i]);
     }
      
     
