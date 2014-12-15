@@ -145,7 +145,7 @@ function doMouseDown(e){
 	stop();
 	startOffset = canvas_x;
 	playSound(audioFile);
-	userRecord.push([currentTime, canvas_x.toFixed(2)]);
+	//userRecord.push([currentTime, canvas_x.toFixed(2)]);
 	
 }
 
@@ -164,24 +164,26 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 		//calculate volume
 		var index = volumeIndex*windowSize;
 		var squareSum = 0;
-		for(var i = 0; i<windowSize; i++){
-			squareSum+=Math.pow((i/windowSize)*sampleArray[index],2);
-			index++;
-		}
-		for(var i = 0; i<windowSize; i++){
-			squareSum+=Math.pow(sampleArray[index],2);
-			index++;
-		}
-		for(var i = 0; i<windowSize; i++){
-			squareSum+=Math.pow((1-i/windowSize)*sampleArray[index],2);
-			index++;
+		if (volumeIndex != 0 && volumeIndex != lastIndex){
+			for(var i = 0; i<windowSize; i++){
+				squareSum+=Math.pow((i/windowSize)*sampleArray[index-1024],2);
+				index++;
+			}
+			for(var i = 0; i<windowSize; i++){
+				squareSum+=Math.pow(sampleArray[index],2);
+				index++;
+			}
+			for(var i = 0; i<windowSize; i++){
+				squareSum+=Math.pow((1-i/windowSize)*sampleArray[index+1024],2);
+				index++;
 
+			}
 		}
+
 		volumeArray[volumeIndex] =  180*Math.log(squareSum/(2*windowSize))/Math.LN10 + 220;;
 
 	}
 }
-
 
 function generateVolumeGraph(floatArray, length){
 	var valueArray = [];
@@ -225,7 +227,7 @@ function getAverageVolume(floatArray, offset, length){
 		var volumeIndex = Math.floor(index/1024)-1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
-			sum+=l/1024*volumes[volumeIndex];
+			sum+= volumes[volumeIndex];
 		}
 		index+=1024;
 	}
@@ -263,10 +265,17 @@ function plotGraph(graph, canvas){
     context.fillStyle= "#f0f0f0";
     context.fillRect(0,0,canvas.width, canvas.height);
     context.beginPath();
+
+    for(var i = 0; i<graph.value.length; i++){
+    	context.moveTo(i,canvas.height);
+    	context.lineTo(i, -graph.value[i]);
+    }
+    /*
     for(var i = 0; i<graph.length; i++){
     	context.moveTo(i,canvas.height);
     	context.lineTo(i,-graph.value[i]);
     }
+    */
      
     
     context.strokeStyle="#000000";
@@ -299,4 +308,3 @@ function drawProgress(canvas){
 		drawProgress(document.getElementById("interfaceCanvas"))
 	});
 }
-
