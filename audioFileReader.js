@@ -5,7 +5,7 @@ var startTime = 0;
 var audioFile;
 var playingOn=false;
 var userRecord = [];
-
+var volumes = []; // volume per every window samples
 
 
 var contextClass = (window.AudioContext || 
@@ -64,6 +64,11 @@ function audioFileDecoded(audioBuffer){
 		stop();
 	}
 	audioFile = audioBuffer;
+
+	//after the audio file decoded, call volume calculator first
+	calculateVolume(volumes, audioBuffer.getChannelData(0), 1024);
+
+	//then generate volume graph with the volume array
 	var graph = generateVolumeGraph(audioBuffer.getChannelData(0), 1000);
 	plotGraph(graph, document.getElementById("plottingCanvas"));
 	playSound(audioBuffer);
@@ -145,8 +150,37 @@ function doMouseDown(e){
 }
 
 
+//calculate volume using simple linear array
 
+function calculateVolume(volumeArray, sampleArray, windowSize){
+	if(sampleArray.length<windowSize*3){
+		console.log("error: sample length is too short. (less than 3*windowSize)");
+		return;
+	}
+	var volumeIndex = 0;
+	var lastIndex = Math.floor((sampleArray.length)/windowSize)-1;
 
+	for(;volumeIndex<lastIndex; volumeIndex++){
+		//calculate volume
+		var index = volumeIndex*windowSize;
+		var squareSum = 0;
+		for(var i = 0; i<windowSize; i++){
+			squareSum+=Math.pow((i/windowSize)*sampleArray[index],2);
+			index++;
+		}
+		for(var i = 0; i<windowSize; i++){
+			squareSum+=Math.pow(sampleArray[index],2);
+			index++;
+		}
+		for(var i = 0; i<windowSize; i++){
+			squareSum+=Math.pow((1-i/windowSize)*sampleArray[index],2);
+			index++;
+
+		}
+		volumeArray[volumeIndex] = squareSum/(2*windowSize);
+
+	}
+}
 
 function generateVolumeGraph(floatArray, length){
 	var graph = [];
