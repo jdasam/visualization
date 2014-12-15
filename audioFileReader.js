@@ -195,7 +195,7 @@ function generateVolumeGraph(floatArray, length){
 
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-		alphaArray[i] = 0;
+		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 	}
 	return {value:valueArray, alpha:alphaArray};
 }
@@ -219,11 +219,13 @@ function getAverageVolume(floatArray, offset, length){
 	while(index<offset+length){
 		var next1024 = 1024*(Math.floor(index/1024)+1);
 	    var l;
+	    // length는 샘플 길이인데 샘플 위치 값인 인덱스나 next1024랑 비교하는 부분이 잘 이해가 안 되네요..ㅠㅠ
 	    if(length>next1024){
 	    	l= next1024-index;
 	    }else{
 	    	l = length-index;
 	    }
+
 		var volumeIndex = Math.floor(index/1024)-1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
@@ -234,6 +236,8 @@ function getAverageVolume(floatArray, offset, length){
 
 	return sum*1024/length;
 
+
+	/*
 	var squareSum = 0;
 
 	var sampleCount = 0;
@@ -257,7 +261,52 @@ function getAverageVolume(floatArray, offset, length){
 		sampleCount++;
 	}
 	return 180*Math.log(squareSum/length)/Math.LN10 + 220;
+	*/
 }
+
+
+//getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
+function getOnsetDensity(floatArray, offset, length){
+	if(offset < 0){
+		offset=0;
+	}
+
+	if(offset+length>floatArray.length){
+		//length = Math.min(floatArray.length - offset, 1);
+		console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
+		return 0;
+	}
+
+
+
+	var onsetCount = 0;
+	var index = offset;
+	var increaseValue = 0;
+	
+
+	var onsetThreshold = 50;
+
+
+	while(index<offset+length){
+		var volumeIndex = Math.floor(index/1024)-1;
+		if(volumes[volumeIndex+1] > volumes[volumeIndex]){
+			increaseValue += volumes[volumeIndex+1] - volumes[volumeIndex];
+		}
+		else if(volumes[volumeIndex+1] <= volumes[volumeIndex] && increaseValue > onsetThreshold){
+			increaseValue = 0;
+			onsetCount++;
+		}
+		else{
+			increaseValue = 0;
+		}
+
+
+	index += 1024;
+	}
+	return onsetCount;
+
+}
+
 
 function plotGraph(graph, canvas){
 	var context = canvas.getContext("2d");
@@ -268,7 +317,7 @@ function plotGraph(graph, canvas){
 
     for(var i = 0; i<graph.value.length; i++){
     	context.moveTo(i,canvas.height);
-    	context.lineTo(i, -graph.value[i]);
+		context.lineTo(i, canvas.height - 150000000 / audioFile.length * graph.alpha[i]);
     }
     /*
     for(var i = 0; i<graph.length; i++){
