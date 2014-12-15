@@ -177,7 +177,7 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 			index++;
 
 		}
-		volumeArray[volumeIndex] = squareSum/(2*windowSize);
+		volumeArray[volumeIndex] =  180*Math.log(squareSum/(2*windowSize))/Math.LN10 + 220;;
 
 	}
 }
@@ -211,6 +211,21 @@ function getAverageVolume(floatArray, offset, length){
 		return -600;
 	}
 
+	var sum = 0;
+
+	var index = offset;
+	while(index<offset+length){
+		var next1024 = 1024*(Math.floor(index/1024)+1);
+
+		var volumeIndex = Math.floor(index/1024)-1;
+		if(volumeIndex<0){ //first 1024 has no volume value;
+		}else{
+			sum+=volumes[volumeIndex];
+		}
+		index+=1024;
+	}
+
+	return sum*1024/length;
 
 	var squareSum = 0;
 
