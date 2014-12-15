@@ -216,11 +216,16 @@ function getAverageVolume(floatArray, offset, length){
 	var index = offset;
 	while(index<offset+length){
 		var next1024 = 1024*(Math.floor(index/1024)+1);
-
+	    var l;
+	    if(length>next1024){
+	    	l= next1024-index;
+	    }else{
+	    	l = length-index;
+	    }
 		var volumeIndex = Math.floor(index/1024)-1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
-			sum+=volumes[volumeIndex];
+			sum+=l/1024*volumes[volumeIndex];
 		}
 		index+=1024;
 	}
