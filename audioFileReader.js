@@ -4,6 +4,7 @@ var startOffset = 0;
 var startTime = 0;
 var audioFile;
 var playingOn=false;
+var increaseValueSave;
 var userRecord = [];
 var volumes = []; // volume per every window samples
 
@@ -33,6 +34,7 @@ window.onload=function(){
 	control.addEventListener("change", fileChanged, false);
 
 	audioContext = new AudioContext();
+
 }
 
 window.requestAnimFrame = (function(callback) {
@@ -66,7 +68,7 @@ function audioFileDecoded(audioBuffer){
 	audioFile = audioBuffer;
 
 	//after the audio file decoded, call volume calculator first
-	calculateVolume(volumes, audioBuffer.getChannelData(0), 1024);
+	calculateVolume(volumes, audioBuffer.getChannelData(0), 2048);
 
 	//then generate volume graph with the volume array
 	var graph = generateVolumeGraph(audioBuffer.getChannelData(0), 1000);
@@ -158,15 +160,25 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 		return;
 	}
 	var volumeIndex = 0;
-	var lastIndex = Math.floor((sampleArray.length)/windowSize)-1;
+	var lastIndex = Math.floor((sampleArray.length)/windowSize*2)-1;
 
 	for(;volumeIndex<lastIndex; volumeIndex++){
 		//calculate volume
-		var index = volumeIndex*windowSize;
+		var index = volumeIndex*windowSize/2;
 		var squareSum = 0;
 		if (volumeIndex != 0 && volumeIndex != lastIndex){
+			
 			for(var i = 0; i<windowSize; i++){
-				squareSum+=Math.pow((i/windowSize)*sampleArray[index-1024],2);
+				//squareSum+= Math.pow(sampleArray[index] ,2 )
+
+				squareSum+= Math.pow(sampleArray[index] * 0.5 *  (1- Math.cos(2*Math.PI*i/(windowSize))),2 )
+				index++;
+
+			}
+
+			/*
+			for(var i = 0; i<windowSize; i++){
+				squareSum+=Math.pow((i/windowSize)*sampleArray[index-2048],2);
 				index++;
 			}
 			for(var i = 0; i<windowSize; i++){
@@ -174,13 +186,14 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 				index++;
 			}
 			for(var i = 0; i<windowSize; i++){
-				squareSum+=Math.pow((1-i/windowSize)*sampleArray[index+1024],2);
+				squareSum+=Math.pow((1-i/windowSize)*sampleArray[index+2048],2);
 				index++;
 
 			}
+			*/
 		}
-
-		volumeArray[volumeIndex] =  180*Math.log(squareSum/(2*windowSize))/Math.LN10 + 220;;
+		volumeArray[volumeIndex] = squareSum;
+		//volumeArray[volumeIndex] =  130*Math.log(squareSum/(2*windowSize))/Math.LN10 + 280;;
 
 	}
 }
@@ -229,7 +242,7 @@ function getAverageVolume(floatArray, offset, length){
 		var volumeIndex = Math.floor(index/1024)-1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
-			sum+= volumes[volumeIndex];
+			sum+= 130*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 280;
 		}
 		index+=1024;
 	}
@@ -274,7 +287,7 @@ function getOnsetDensity(floatArray, offset, length){
 	if(offset+length>floatArray.length){
 		//length = Math.min(floatArray.length - offset, 1);
 		console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
-		return 0;
+		return 0.5;
 	}
 
 
@@ -284,7 +297,7 @@ function getOnsetDensity(floatArray, offset, length){
 	var increaseValue = 0;
 	
 
-	var onsetThreshold = 50;
+	var onsetThreshold = 0.5;
 
 
 	while(index<offset+length){
@@ -292,7 +305,7 @@ function getOnsetDensity(floatArray, offset, length){
 		if(volumes[volumeIndex+1] > volumes[volumeIndex]){
 			increaseValue += volumes[volumeIndex+1] - volumes[volumeIndex];
 		}
-		else if(volumes[volumeIndex+1] <= volumes[volumeIndex] && increaseValue > onsetThreshold){
+		else if(volumes[volumeIndex+1] <= volumes[volumeIndex] && increaseValue > onsetThreshold*volumes[volumeIndex+1] + 0.01){
 			increaseValue = 0;
 			onsetCount++;
 		}
@@ -301,8 +314,9 @@ function getOnsetDensity(floatArray, offset, length){
 		}
 
 
-	index += 1024;
+	index += 2048;
 	}
+	increaseValueSave = increaseValue;
 	return onsetCount;
 
 }
@@ -311,14 +325,23 @@ function getOnsetDensity(floatArray, offset, length){
 function plotGraph(graph, canvas){
 	var context = canvas.getContext("2d");
 	
-    context.fillStyle= "#f0f0f0";
+	context.setAlpha(1)
+    context.fillStyle= "#ffffff";
     context.fillRect(0,0,canvas.width, canvas.height);
-    context.beginPath();
 
     for(var i = 0; i<graph.value.length; i++){
+    	context.beginPath();
+   		context.setAlpha(graph.alpha[i] / audioFile.length * 400000 + 0.3);
     	context.moveTo(i,canvas.height);
-		context.lineTo(i, canvas.height - 150000000 / audioFile.length * graph.alpha[i]);
+		context.lineTo(i, -graph.value[i]);
+		    context.strokeStyle="#000000";
+    	context.lineWidth=1;
+
+    	context.stroke();    
+
     }
+
+
     /*
     for(var i = 0; i<graph.length; i++){
     	context.moveTo(i,canvas.height);
@@ -327,9 +350,7 @@ function plotGraph(graph, canvas){
     */
      
     
-    context.strokeStyle="#000000";
-    context.lineWidth=1;
-    context.stroke();    
+
     
 }
 
