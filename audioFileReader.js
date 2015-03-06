@@ -9,6 +9,8 @@ var userRecord = [];
 var volumes = []; // volume per every window samples
 
 
+
+
 var contextClass = (window.AudioContext || 
   window.webkitAudioContext || 
   window.mozAudioContext || 
@@ -147,8 +149,8 @@ function doMouseDown(e){
 	stop();
 	startOffset = canvas_x;
 	playSound(audioFile);
+	//재생 위치 기록
 	//userRecord.push([currentTime, canvas_x.toFixed(2)]);
-	
 }
 
 
@@ -159,6 +161,7 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 		console.log("error: sample length is too short. (less than 3*windowSize)");
 		return;
 	}
+
 	var volumeIndex = 0;
 	var lastIndex = Math.floor((sampleArray.length)/windowSize*2)-1;
 
@@ -166,7 +169,7 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 		//calculate volume
 		var index = volumeIndex*windowSize/2;
 		var squareSum = 0;
-		if (volumeIndex != 0 && volumeIndex != lastIndex){
+		if (volumeIndex >= 0 && volumeIndex != lastIndex){
 			
 			for(var i = 0; i<windowSize; i++){
 				//squareSum+= Math.pow(sampleArray[index] ,2 )
@@ -192,7 +195,7 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 			}
 			*/
 		}
-		volumeArray[volumeIndex] = squareSum;
+		volumeArray[volumeIndex] = squareSum + 0.00001; //prevent from become zero (which causes minus infinity)
 		//volumeArray[volumeIndex] =  130*Math.log(squareSum/(2*windowSize))/Math.LN10 + 280;;
 
 	}
@@ -202,44 +205,47 @@ function generateVolumeGraph(floatArray, length){
 	var valueArray = [];
 	var alphaArray = [];
 	var arrayLength = floatArray.length;
-	var overlappingSamples = arrayLength/length * 25;
-	var offsetPerX = (arrayLength)/length;
-	var samplesPerX = overlappingSamples;
+	var samplesPerX = arrayLength/length * 20; // overlapping samples
+	var offsetPerX = arrayLength/length;
 
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
+
+		if (i < 10){
+			console.log(valueArray[i]);
+		}
 	}
 	return {value:valueArray, alpha:alphaArray};
 }
 
 function getAverageVolume(floatArray, offset, length){
 	
-	if(offset < 0){
-		offset=0;
+	// 처음 시작부분 offset이 0보다 작을 때 
+	if (offset < 0){
+		//console.log(offset)
+		length = length + offset*2;
+		offset = 0; 
+
+
+
 	}
 
-	
+	// 끝 부분 offset
 	if(offset+length>floatArray.length){
 		//length = Math.min(floatArray.length - offset, 1);
-		console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
+		//console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
 		return -600;
 	}
+
+
 
 	var sum = 0;
 
 	var index = offset;
 	while(index<offset+length){
-		var next1024 = 1024*(Math.floor(index/1024)+1);
-	    var l;
-	    // length는 샘플 길이인데 샘플 위치 값인 인덱스나 next1024랑 비교하는 부분이 잘 이해가 안 되네요..ㅠㅠ
-	    if(length>next1024){
-	    	l= next1024-index;
-	    }else{
-	    	l = length-index;
-	    }
-
-		var volumeIndex = Math.floor(index/1024)-1;
+	   
+		var volumeIndex = Math.floor(index/1024) + 1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
 			sum+= 130*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 280;
@@ -286,7 +292,8 @@ function getOnsetDensity(floatArray, offset, length){
 
 	if(offset+length>floatArray.length){
 		//length = Math.min(floatArray.length - offset, 1);
-		console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
+
+		//console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
 		return 0.5;
 	}
 
@@ -325,13 +332,15 @@ function getOnsetDensity(floatArray, offset, length){
 function plotGraph(graph, canvas){
 	var context = canvas.getContext("2d");
 	
-	context.setAlpha(1)
+	// !!!! context.setAlpha 오류 !!!!!!
+
+	//context.setAlpha(1)
     context.fillStyle= "#ffffff";
     context.fillRect(0,0,canvas.width, canvas.height);
 
     for(var i = 0; i<graph.value.length; i++){
     	context.beginPath();
-   		context.setAlpha(graph.alpha[i] / audioFile.length * 400000 + 0.3);
+   		//context.setAlpha(graph.alpha[i] / audioFile.length * 400000 + 0.3);
     	context.moveTo(i,canvas.height);
 		context.lineTo(i, -graph.value[i]);
 		    context.strokeStyle="#000000";
@@ -349,9 +358,7 @@ function plotGraph(graph, canvas){
     }
     */
      
-    
-
-    
+   
 }
 
 
