@@ -212,9 +212,6 @@ function generateVolumeGraph(floatArray, length){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 
-		if (i < 10){
-			console.log(valueArray[i]);
-		}
 	}
 	return {value:valueArray, alpha:alphaArray};
 }
@@ -233,9 +230,13 @@ function getAverageVolume(floatArray, offset, length){
 
 	// 끝 부분 offset
 	if(offset+length>floatArray.length){
-		//length = Math.min(floatArray.length - offset, 1);
+		length = Math.floor(2*(floatArray.length - (offset + length/2)))
+		offset = floatArray.length - length;
+		console.log(floatArray.length);
+		console.log(offset+length);
+		//console.log(volumes[Math.floor(offset/1024)]);
 		//console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
-		return -600;
+		//return -600;
 	}
 
 
