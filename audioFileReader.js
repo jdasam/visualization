@@ -195,7 +195,7 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 			}
 			*/
 		}
-		volumeArray[volumeIndex] = squareSum + 0.00001; //prevent from become zero (which causes minus infinity)
+		volumeArray[volumeIndex] = squareSum + 0.00001; //prevent from become zero (which causes minus infinity) 
 		//volumeArray[volumeIndex] =  130*Math.log(squareSum/(2*windowSize))/Math.LN10 + 280;;
 
 	}
@@ -232,11 +232,6 @@ function getAverageVolume(floatArray, offset, length){
 	if(offset+length>floatArray.length){
 		length = Math.floor(2*(floatArray.length - (offset + length/2)))
 		offset = floatArray.length - length;
-		console.log(floatArray.length);
-		console.log(offset+length);
-		//console.log(volumes[Math.floor(offset/1024)]);
-		//console.log("warning: getAverageVolume() received wrong range:" + floatArray + offset + length);
-		//return -600;
 	}
 
 
@@ -331,23 +326,23 @@ function getOnsetDensity(floatArray, offset, length){
 
 
 function plotGraph(graph, canvas){
-	var context = canvas.getContext("2d");
+	var graphic_context = canvas.getContext("2d");
 	
 	// !!!! context.setAlpha 오류 !!!!!!
 
-	//context.setAlpha(1)
-    context.fillStyle= "#ffffff";
-    context.fillRect(0,0,canvas.width, canvas.height);
+	graphic_context.globalAlpha = 1;
+    graphic_context.fillStyle= "#ffffff";
+    graphic_context.fillRect(0,0,canvas.width, canvas.height);
 
     for(var i = 0; i<graph.value.length; i++){
-    	context.beginPath();
-   		//context.setAlpha(graph.alpha[i] / audioFile.length * 400000 + 0.3);
-    	context.moveTo(i,canvas.height);
-		context.lineTo(i, -graph.value[i]);
-		    context.strokeStyle="#000000";
-    	context.lineWidth=1;
+    	graphic_context.beginPath();
+   		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
+    	graphic_context.moveTo(i,canvas.height);
+		graphic_context.lineTo(i, -graph.value[i]);
+		    graphic_context.strokeStyle="#000000";
+    	graphic_context.lineWidth=1;
 
-    	context.stroke();    
+    	graphic_context.stroke();    
 
     }
 
