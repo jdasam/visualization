@@ -8,6 +8,14 @@ var increaseValueSave;
 var userRecord = [];
 var volumes = []; // volume per every window samples
 
+var analyserNode;
+var javascriptNode;
+var sampleSize = 1024;
+var fftSize = 1024;
+var frequencyArray;
+var column = 0;
+
+var colorScale = new chroma.scale(['black', 'red', 'yellow', 'white']).out('hex');
 
 
 
@@ -79,14 +87,13 @@ function audioFileDecoded(audioBuffer){
 	
 	//전체적으로 drawProgress 호출이 중구난방이네요. 
 	//애니메이션 구조를 좀 정리해야겠어요.
-	drawProgress(document.getElementById("interfaceCanvas"));
+	//drawProgress(document.getElementById("interfaceCanvas"));
+	drawSpectrogram(document.getElementById("interfaceCanvas"));
 }
 
 function audioFileDecodeFailed(e){
 	alert("The audio file cannot be decoded!");
 }
-
-
 
 function loadSound(url) {
 	var request = new XMLHttpRequest();
@@ -110,7 +117,19 @@ function setupAudioNodes() {
 	sourceNode = audioContext.createBufferSource();
 	// and connect to destination
 	sourceNode.connect(audioContext.destination);
+
+	analyserNode = audioContext.createAnalyser();
+	analyserNode.smoothingTimeConstant = 0.0;
+	analyserNode.fftSize = fftSize;
+
 	
+	javascriptNode = audioContext.createScriptProcessor(sampleSize, 1, 1);
+	frequencyArray = new Uint8Array(analyserNode.frequencyBinCount);
+
+	sourceNode.connect(analyserNode);
+	analyserNode.connect(javascriptNode);
+	javascriptNode.connect(audioContext.destination);
+
 }
 
 
@@ -122,6 +141,12 @@ function playSound(audioBuffer) {
 	sourceNode.buffer = audioBuffer;
 	sourceNode.start(0, startOffset % audioBuffer.duration);
 	playingOn = true;
+
+	javascriptNode.onaudioprocess = function () {
+	// get the Frequency Domain data for this sample
+	analyserNode.getByteFrequencyData(frequencyArray);
+	}
+
 }
 
 function pause() {
@@ -379,5 +404,35 @@ function drawProgress(canvas){
     
 	requestAnimFrame(function() {
 		drawProgress(document.getElementById("interfaceCanvas"))
+		
 	});
 }
+
+
+
+function drawSpectrogram(canvas) {
+	var ctx = canvas.getContext("2d");
+
+	for (var i = 0; i < frequencyArray.length; i++) {
+		// Get the color from the color map, draw 1x1 pixel rectangle
+		ctx.fillStyle = colorScale(frequencyArray[i] / 256.0);
+		ctx.fillRect(column,600 - i, 1, 1);
+	}
+	// loop around the canvas when we reach the end
+	column += 1;
+	if(column >= 1000) {
+		column = 0;
+		clearCanvas(ctx);
+	}
+	requestAnimFrame(function() {
+		drawSpectrogram(document.getElementById("interfaceCanvas"))
+		
+	});
+}
+
+
+function clearCanvas(ctx) {
+	ctx.clearRect(0, 0, 1000, 600);
+}
+
+
