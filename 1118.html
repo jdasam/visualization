@@ -1,0 +1,59 @@
+<html>
+<head>
+	<script src="chroma.js"></script>
+	<script src="audioFileReader.js"></script>
+
+</head>
+<body>
+	<div style="width:1000; height:600">
+	<canvas id="plottingCanvas" width="1000" height="600" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
+	<canvas id="interfaceCanvas" width="1000" height="600" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
+	</div>
+	<div>
+	<input id="fileChooseInput" type="file"></input>
+	</div>
+
+	<div id="menu">
+	<button class="btn btn-primary" data-action="pause">
+		<i class="glyphicon glyphicon-play"></i>
+		Pause
+	</button>
+	<button class="btn btn-primary" data-action="play">
+		<i class="glyphicon glyphicon-play"></i>
+		Play
+	</button>
+	<button class="btn btn-primary" data-action="stop">
+		<i class="glyphicon glyphicon-play"></i>
+		Stop
+	</button>
+	</div>
+
+
+</body>
+
+<script>
+
+function Menu(elem) {
+  elem.onclick = function(e) {
+    var target = e && e.target || event.srcElement
+    var action = target.getAttribute('data-action')
+    if (action=="play" && playingOn == false) {
+    	playSound(audioFile);
+    }
+    else if(action=="pause") {
+    	pause();
+    }
+    else if(action=="stop") {
+    	stop();
+    }
+  }
+}
+new Menu(document.getElementById('menu'))
+
+
+
+
+
+
+</script>
+</html>
