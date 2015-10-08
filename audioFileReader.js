@@ -8,6 +8,23 @@ var increaseValueSave;
 var userRecord = [];
 var volumes = []; // volume per every window samples
 
+var fftSize = 4096;
+var samplingRate = 44100;
+var frequencyBinSize = samplingRate/fftSize;
+
+
+var blackmanAlpha = 0.16
+var blackman0 = (1-blackmanAlpha)/2
+var blackman1 = 1/2
+var blackman2 = blackmanAlpha/2
+
+var smoothingTimeConstant = 0.1;
+
+
+var dummyArray = new Array(fftSize/2);
+for (var i=0; i<fftSize/2; i++){
+    dummyArray[i] = 0;
+}
 
 
 
@@ -68,14 +85,17 @@ function audioFileDecoded(audioBuffer){
 		stop();
 	}
 	audioFile = audioBuffer;
+	monoAudio = audioToMono(audioBuffer)
 
 	//after the audio file decoded, call volume calculator first
-	calculateVolume(volumes, audioBuffer.getChannelData(0), 2048);
+	calculateVolume(volumes, monoAudio, 2048);
 
 	//then generate volume graph with the volume array
-	var graph = generateVolumeGraph(audioBuffer.getChannelData(0), 1000);
+	var graph = generateVolumeGraph(monoAudio, 1000);
 	plotGraph(graph, document.getElementById("plottingCanvas"));
 	playSound(audioBuffer);
+
+	doFFT(monoAudio);
 	
 	//전체적으로 drawProgress 호출이 중구난방이네요. 
 	//애니메이션 구조를 좀 정리해야겠어요.
@@ -328,7 +348,7 @@ function getOnsetDensity(floatArray, offset, length){
 function plotGraph(graph, canvas){
 	var graphic_context = canvas.getContext("2d");
 	
-	// !!!! context.setAlpha 오류 !!!!!!
+
 
 	graphic_context.globalAlpha = 1;
     graphic_context.fillStyle= "#ffffff";
@@ -381,3 +401,121 @@ function drawProgress(canvas){
 		drawProgress(document.getElementById("interfaceCanvas"))
 	});
 }
+
+
+
+function doFFT(input){
+    var result = {};
+    var smoothingBuffer = dummyArray;
+
+    for (var i=0, len = input.length % fftSize; i<len; i++){
+        input.push(0);
+    }
+
+    for (var i = 0, len = input.length; i<len; i = i+fftSize){
+        var fft = new FFT(fftSize, 44100);
+        var hop = input.slice(i, i+fftSize);
+        hop = blackmanWindow(hop);
+        fft.forward(hop);
+        //fft.spectrum = smoothingFilters(fft.spectrum, 2);
+        fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
+        smoothingBuffer = fft.spectrum;
+        var peakArray = peakDetection(fft.spectrum, 20);
+
+        var totalRoughness = 0;
+        for (var j = 0; j < 20; j++){
+            for (var k = j+1; k < 20; k++){
+                totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
+            }
+        }
+        console.log(totalRoughness);
+        fft.spectrum = conversionToDB(fft.spectrum);
+
+      
+    }
+}
+
+function blackmanWindow(array){
+    var output = new Array
+    for (var i = 0, len = array.length; i<len; i++){
+        output[i] = array[i] * (blackman0 - blackman1 * Math.cos(2 * Math.PI * i / len) + blackman2 * Math.cos(4 * Math.PI * i /len))
+    }
+    return output
+}
+
+function smoothing(currentArray, bufferArray){
+    var output = new Array
+    for (var i = 0, len = currentArray.length; i<len; i++){
+        output[i] = smoothingTimeConstant * bufferArray[i] + (1 - smoothingTimeConstant) * currentArray[i]
+    }
+    return output
+}
+
+function conversionToDB(array){
+    var output = new Array
+    for (var i = 0, len = array.length; i<len; i++){
+        output[i] = 50 * Math.log(array[i]) / Math.log(10) ;
+    }
+    //console.log(output)
+    return output
+}
+
+function smoothingFilters(array, filterWidth){
+    var output = new Array(array.length);
+
+    for (var i = 0, len = array.length; i<len; i++){
+        console.log(array[i])
+        if (i > filterWidth && i +filterWidth < array.length){
+            var sum = 0;
+            for (var k = -filterWidth; k <= filterWidth; k++){
+                sum += array[i+k];
+            }
+
+            output[i] = sum / (1 + 2 * filterWidth)                
+        }
+        else {
+            output[i] = array[i]
+        }
+
+    }
+    return output;
+}
+
+function peakDetection(array, peakNumber){
+    var output = [];
+    for (var i = 0, len = array.length; i<len; i++){
+        if(array[i] > Math.max(array[i-3], array[i-2], array[i-1], array[i+1], array[i+2], array[i+3]))
+            output.push([i, array[i]]);
+    }
+    output.sort(function(a,b){
+        if (a[1] > b[1]) return -1;
+        if (a[1] < b[1]) return 1;
+        return 0;})
+    output = output.slice(0,peakNumber);
+    return output
+}
+
+function roughnessCalculation (sineA, sineB){
+    var ampMin = Math.min(sineA[1], sineB[1]);
+    var ampMax = Math.max(sineA[1], sineB[1]);
+    var freqMin = (Math.min(sineA[0], sineB[0]) +0.5) * frequencyBinSize;
+    var freqMax = (Math.max(sineA[0], sineB[0]) +0.5) * frequencyBinSize;
+
+    var X = ampMin * ampMax
+    var Y = 2 * ampMin / (ampMin + ampMax)
+    var Z = Math.exp(-3.5 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) - Math.exp(-5.75 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) 
+
+    return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z
+}
+
+
+function audioToMono(input){
+    var left = input.getChannelData(0);
+    var right = input.getChannelData(1);
+    var result = new Array(left.length);
+    for (var i = 0, len = input.length; i<len; i++){
+        result[i] = left[i]/2 + right[i]/2
+    }
+    return result
+}
+
