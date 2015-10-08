@@ -21,6 +21,7 @@ var blackman2 = blackmanAlpha/2
 var smoothingTimeConstant = 0.1;
 
 
+
 var dummyArray = new Array(fftSize/2);
 for (var i=0; i<fftSize/2; i++){
     dummyArray[i] = 0;
@@ -89,17 +90,21 @@ function audioFileDecoded(audioBuffer){
 
 	//after the audio file decoded, call volume calculator first
 	calculateVolume(volumes, monoAudio, 2048);
-
+	
 	//then generate volume graph with the volume array
+	
 	var graph = generateVolumeGraph(monoAudio, 1000);
 	plotGraph(graph, document.getElementById("plottingCanvas"));
+	//drawRoughness(roughnessArray, document.getElementById("plottingCanvas"));
+
 	playSound(audioBuffer);
 
-	doFFT(monoAudio);
+
 	
 	//전체적으로 drawProgress 호출이 중구난방이네요. 
 	//애니메이션 구조를 좀 정리해야겠어요.
 	drawProgress(document.getElementById("interfaceCanvas"));
+	
 }
 
 function audioFileDecodeFailed(e){
@@ -222,18 +227,25 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 }
 
 function generateVolumeGraph(floatArray, length){
-	var valueArray = [];
-	var alphaArray = [];
+	var valueArray = new Array(length);
+	var alphaArray = new Array(length);
+	var roughnessArray = new Array(length);
 	var arrayLength = floatArray.length;
 	var samplesPerX = arrayLength/length * 20; // overlapping samples
 	var offsetPerX = arrayLength/length;
 
+	roughnessRaw = doFFT(floatArray);
+
+	var fftPerX = roughnessRaw.length / length * 10;
+
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-
+		roughnessArray[i] = averageWindow(roughnessRaw, i, Math.floor(fftPerX));
+		
 	}
-	return {value:valueArray, alpha:alphaArray};
+
+	return {value:valueArray, alpha:alphaArray, roughness:roughnessArray};
 }
 
 function getAverageVolume(floatArray, offset, length){
@@ -359,7 +371,14 @@ function plotGraph(graph, canvas){
    		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
     	graphic_context.moveTo(i,canvas.height);
 		graphic_context.lineTo(i, -graph.value[i]);
-		    graphic_context.strokeStyle="#000000";
+		console.log(graph.roughness[i]);
+		var R = graph.roughness[i] * 500
+		//console.log(R)
+		if (isNaN(R)) console.log(graph.roughness[i])
+
+		R = Math.round(R) + 20;
+
+		graphic_context.strokeStyle= "rgb( "+R+", 0 ,0)"
     	graphic_context.lineWidth=1;
 
     	graphic_context.stroke();    
@@ -375,6 +394,24 @@ function plotGraph(graph, canvas){
     */
      
    
+}
+
+function drawRoughness(array, canvas){
+	var graphic_context = canvas.getContext("2d");
+
+	graphic_context.globalAlpha = 1;
+
+    for(var i = 0; i<array.length; i++){
+    	graphic_context.beginPath();
+    	graphic_context.moveTo(i,canvas.height);
+		graphic_context.lineTo(i, canvas.height - array[i] * 1000);
+		graphic_context.strokeStyle="#FF0000";
+    	graphic_context.lineWidth=1;
+
+    	graphic_context.stroke();    
+
+    }
+
 }
 
 
@@ -407,10 +444,12 @@ function drawProgress(canvas){
 function doFFT(input){
     var result = {};
     var smoothingBuffer = dummyArray;
+    var roughnessArray = [];
 
-    for (var i=0, len = input.length % fftSize; i<len; i++){
+    for (var i=0, len = fftSize - input.length % fftSize; i<len; i++){
         input.push(0);
     }
+    
 
     for (var i = 0, len = input.length; i<len; i = i+fftSize){
         var fft = new FFT(fftSize, 44100);
@@ -428,11 +467,14 @@ function doFFT(input){
                 totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
             }
         }
-        console.log(totalRoughness);
-        fft.spectrum = conversionToDB(fft.spectrum);
 
+        roughnessArray.push(totalRoughness);
+        //console.log(totalRoughness);
+        //fft.spectrum = conversionToDB(fft.spectrum);
       
     }
+    return roughnessArray;
+
 }
 
 function blackmanWindow(array){
@@ -505,7 +547,7 @@ function roughnessCalculation (sineA, sineB){
     var Y = 2 * ampMin / (ampMin + ampMax)
     var Z = Math.exp(-3.5 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) - Math.exp(-5.75 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) 
 
-    return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z
+    return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z;
 }
 
 
@@ -516,6 +558,19 @@ function audioToMono(input){
     for (var i = 0, len = input.length; i<len; i++){
         result[i] = left[i]/2 + right[i]/2
     }
-    return result
+    return result;
+}
+
+function averageWindow(array, index, width){
+	var sum=0;
+	if (index > width && index + width < array.length){
+		for(var i=0; i<width; i++){
+			sum += array[index - (width-1)/2 + i];
+		}
+		return sum/width;
+	}
+
+	else return array[index];
+
 }
 
