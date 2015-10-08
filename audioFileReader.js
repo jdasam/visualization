@@ -236,7 +236,8 @@ function generateVolumeGraph(floatArray, length){
 
 	roughnessRaw = doFFT(floatArray);
 
-	var fftPerX = roughnessRaw.length / length * 10;
+	var fftPerX = roughnessRaw.length / length ;
+	if (Math.floor(fftPerX) % 2 == 0) fftPerX++
 
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
@@ -368,15 +369,15 @@ function plotGraph(graph, canvas){
 
     for(var i = 0; i<graph.value.length; i++){
     	graphic_context.beginPath();
-   		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
+   		//graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
     	graphic_context.moveTo(i,canvas.height);
 		graphic_context.lineTo(i, -graph.value[i]);
-		console.log(graph.roughness[i]);
-		var R = graph.roughness[i] * 500
+		//console.log(graph.roughness[i]);
+		var R = graph.roughness[i] * 1000
 		//console.log(R)
-		if (isNaN(R)) console.log(graph.roughness[i])
+		//if (isNaN(R)) console.log(i)
 
-		R = Math.round(R) + 20;
+		R = Math.round(R);
 
 		graphic_context.strokeStyle= "rgb( "+R+", 0 ,0)"
     	graphic_context.lineWidth=1;
@@ -461,6 +462,7 @@ function doFFT(input){
         smoothingBuffer = fft.spectrum;
         var peakArray = peakDetection(fft.spectrum, 20);
 
+
         var totalRoughness = 0;
         for (var j = 0; j < 20; j++){
             for (var k = j+1; k < 20; k++){
@@ -506,7 +508,6 @@ function smoothingFilters(array, filterWidth){
     var output = new Array(array.length);
 
     for (var i = 0, len = array.length; i<len; i++){
-        console.log(array[i])
         if (i > filterWidth && i +filterWidth < array.length){
             var sum = 0;
             for (var k = -filterWidth; k <= filterWidth; k++){
@@ -529,11 +530,20 @@ function peakDetection(array, peakNumber){
         if(array[i] > Math.max(array[i-3], array[i-2], array[i-1], array[i+1], array[i+2], array[i+3]))
             output.push([i, array[i]]);
     }
+
+    if (output.length < peakNumber){
+    	for (var j = 0, len=peakNumber - output.length; j <len; j++){
+    		output.push([0,0]);
+    	}
+    }
+    
     output.sort(function(a,b){
         if (a[1] > b[1]) return -1;
         if (a[1] < b[1]) return 1;
         return 0;})
     output = output.slice(0,peakNumber);
+
+
     return output
 }
 
@@ -543,11 +553,17 @@ function roughnessCalculation (sineA, sineB){
     var freqMin = (Math.min(sineA[0], sineB[0]) +0.5) * frequencyBinSize;
     var freqMax = (Math.max(sineA[0], sineB[0]) +0.5) * frequencyBinSize;
 
+    
     var X = ampMin * ampMax
     var Y = 2 * ampMin / (ampMin + ampMax)
     var Z = Math.exp(-3.5 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) - Math.exp(-5.75 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) 
+    
+    if (isNaN(Y)) return 0
 
     return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z;
+
+
+
 }
 
 
