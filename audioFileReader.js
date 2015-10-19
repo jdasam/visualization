@@ -28,6 +28,15 @@ for (var i=0; i<fftSize/2; i++){
 }
 
 
+var hot = new chroma.ColorScale({
+    colors:['#000000', '#ff0000', '#ffff00', '#ffffff'],
+    positions:[0, .25, .75, 1],
+    mode:'rgb',
+    limits:[0, 300]
+});
+
+
+
 
 var contextClass = (window.AudioContext || 
   window.webkitAudioContext || 
@@ -277,7 +286,7 @@ function getAverageVolume(floatArray, offset, length){
 		var volumeIndex = Math.floor(index/1024) + 1;
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
-			sum+= 130*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 280;
+			sum+= 150*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 250;
 		}
 		index+=1024;
 	}
@@ -369,7 +378,7 @@ function plotGraph(graph, canvas){
 
     for(var i = 0; i<graph.value.length; i++){
     	graphic_context.beginPath();
-   		//graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
+   		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
     	graphic_context.moveTo(i,canvas.height);
 		graphic_context.lineTo(i, -graph.value[i]);
 		//console.log(graph.roughness[i]);
@@ -379,7 +388,8 @@ function plotGraph(graph, canvas){
 
 		R = Math.round(R);
 
-		graphic_context.strokeStyle= "rgb( "+R+", 0 ,0)"
+		//graphic_context.strokeStyle= "rgb( "+R+", 0 ,0)"
+		graphic_context.strokeStyle = hot.getColor(R).hex();
     	graphic_context.lineWidth=1;
 
     	graphic_context.stroke();    
