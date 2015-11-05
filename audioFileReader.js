@@ -245,13 +245,13 @@ function generateVolumeGraph(floatArray, length){
 
 	roughnessRaw = doFFT(floatArray);
 
-	var fftPerX = roughnessRaw.length / length ;
-	if (Math.floor(fftPerX) % 2 == 0) fftPerX++
+	var fftWindowPerX = roughnessRaw.length / length ;
+	if (Math.floor(fftWindowPerX) % 2 == 0) fftWindowPerX++
 
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-		roughnessArray[i] = averageWindow(roughnessRaw, i, Math.floor(fftPerX));
+		roughnessArray[i] = averageWindow(roughnessRaw, Math.floor(i * fftWindowPerX), Math.floor(fftWindowPerX) * 5);
 		
 	}
 
@@ -470,7 +470,7 @@ function doFFT(input){
         //fft.spectrum = smoothingFilters(fft.spectrum, 2);
         fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
         smoothingBuffer = fft.spectrum;
-        var peakArray = peakDetection(fft.spectrum, 20);
+        var peakArray = peakDetection(fft.spectrum, 50);
 
 
         var totalRoughness = 0;
