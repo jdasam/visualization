@@ -243,7 +243,7 @@ function generateVolumeGraph(floatArray, length){
 	var samplesPerX = arrayLength/length * 20; // overlapping samples
 	var offsetPerX = arrayLength/length;
 
-	roughnessRaw = doFFT(floatArray);
+	var roughnessRaw = doFFT(floatArray);
 
 	var fftWindowPerX = roughnessRaw.length / length ;
 	if (Math.floor(fftWindowPerX) % 2 == 0) fftWindowPerX++
