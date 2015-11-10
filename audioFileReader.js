@@ -242,12 +242,11 @@ function generateVolumeGraph(floatArray, length){
 	var arrayLength = floatArray.length;
 	var samplesPerX = arrayLength/length * 20; // overlapping samples
 	var offsetPerX = arrayLength/length;
-
+	
 	var roughnessRaw = doFFT(floatArray);
 
 	var fftWindowPerX = roughnessRaw.length / length ;
 	if (Math.floor(fftWindowPerX) % 2 == 0) fftWindowPerX++
-
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
@@ -256,6 +255,7 @@ function generateVolumeGraph(floatArray, length){
 	}
 
 	return {value:valueArray, alpha:alphaArray, roughness:roughnessArray};
+	
 }
 
 function getAverageVolume(floatArray, offset, length){
@@ -381,15 +381,13 @@ function plotGraph(graph, canvas){
    		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
     	graphic_context.moveTo(i,canvas.height);
 		graphic_context.lineTo(i, -graph.value[i]);
-		//console.log(graph.roughness[i]);
-		var R = graph.roughness[i] * 1000
-		//console.log(R)
-		//if (isNaN(R)) console.log(i)
-
+		
+		
+		var R = graph.roughness[i] * 100
+		
 		R = Math.round(R);
-
-		//graphic_context.strokeStyle= "rgb( "+R+", 0 ,0)"
 		graphic_context.strokeStyle = hot.getColor(R).hex();
+
     	graphic_context.lineWidth=1;
 
     	graphic_context.stroke();    
@@ -474,8 +472,8 @@ function doFFT(input){
 
 
         var totalRoughness = 0;
-        for (var j = 0; j < 20; j++){
-            for (var k = j+1; k < 20; k++){
+        for (var j = 0; j < 50; j++){
+            for (var k = j+1; k < 50; k++){
                 totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
             }
         }
@@ -483,6 +481,7 @@ function doFFT(input){
         roughnessArray.push(totalRoughness);
         //console.log(totalRoughness);
         //fft.spectrum = conversionToDB(fft.spectrum);
+
       
     }
     return roughnessArray;
