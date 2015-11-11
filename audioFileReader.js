@@ -243,20 +243,31 @@ function generateVolumeGraph(floatArray, length){
 	var samplesPerX = arrayLength/length * 20; // overlapping samples
 	var offsetPerX = arrayLength/length;
 	
-	var roughnessRaw = doFFT(floatArray);
+	//var roughnessRaw = [];
 
+	/*
+	//do fft by dividing entire song in one minute
+	for(var i = 0; i< floatArray.length ; i += 2646000){
+		var slicedArray = floatArray.slice(i,i+2646000)
+	}
+	*/
+
+	var roughnessRaw = doFFTforFloatArray(floatArray);
 	var fftWindowPerX = roughnessRaw.length / length ;
-	if (Math.floor(fftWindowPerX) % 2 == 0) fftWindowPerX++
+	//if (Math.floor(fftWindowPerX) % 2 == 0) fftWindowPerX++
+	var roughnessPerX = Math.floor(fftWindowPerX * 5)
+	if (roughnessPerX % 2 == 0) roughnessPerX++
+
+
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-		roughnessArray[i] = averageWindow(roughnessRaw, Math.floor(i * fftWindowPerX), Math.floor(fftWindowPerX) * 5);
+		roughnessArray[i] = averageWindow(roughnessRaw, Math.floor(i * fftWindowPerX), roughnessPerX);
 		
 	}
-
 	return {value:valueArray, alpha:alphaArray, roughness:roughnessArray};
-	
 }
+
 
 function getAverageVolume(floatArray, offset, length){
 	
@@ -450,22 +461,19 @@ function drawProgress(canvas){
 
 
 
-function doFFT(input){
+function doFFTforFloatArray(input){
     var result = {};
     var smoothingBuffer = dummyArray;
     var roughnessArray = [];
 
-    for (var i=0, len = fftSize - input.length % fftSize; i<len; i++){
-        input.push(0);
-    }
+    // push 대신 바꾸기 
     
 
-    for (var i = 0, len = input.length; i<len; i = i+fftSize){
+    for (var i = 0, len = input.length; i<(len - (len%fftSize)); i = i+fftSize){
         var fft = new FFT(fftSize, 44100);
-        var hop = input.slice(i, i+fftSize);
-        hop = blackmanWindow(hop);
+        // slice -> blackman window index로 수
+        var hop = blackmanWindowIndex(input, i, fftSize);
         fft.forward(hop);
-        //fft.spectrum = smoothingFilters(fft.spectrum, 2);
         fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
         smoothingBuffer = fft.spectrum;
         var peakArray = peakDetection(fft.spectrum, 50);
@@ -485,16 +493,17 @@ function doFFT(input){
       
     }
     return roughnessArray;
-
 }
 
-function blackmanWindow(array){
-    var output = new Array
-    for (var i = 0, len = array.length; i<len; i++){
-        output[i] = array[i] * (blackman0 - blackman1 * Math.cos(2 * Math.PI * i / len) + blackman2 * Math.cos(4 * Math.PI * i /len))
+
+function blackmanWindowIndex(array, index, windowSize){
+    var output = new Float32Array(windowSize)
+    for (var i = 0; i<windowSize; i++){
+        output[i] = array[index+i] * (blackman0 - blackman1 * Math.cos(2 * Math.PI * i / windowSize) + blackman2 * Math.cos(4 * Math.PI * i /windowSize))
     }
     return output
 }
+
 
 function smoothing(currentArray, bufferArray){
     var output = new Array
@@ -579,7 +588,7 @@ function roughnessCalculation (sineA, sineB){
 function audioToMono(input){
     var left = input.getChannelData(0);
     var right = input.getChannelData(1);
-    var result = new Array(left.length);
+    var result = new Float32Array(left.length);
     for (var i = 0, len = input.length; i<len; i++){
         result[i] = left[i]/2 + right[i]/2
     }
@@ -599,3 +608,53 @@ function averageWindow(array, index, width){
 
 }
 
+/*
+function blackmanWindow(array){
+    var output = new Array
+    for (var i = 0, len = array.length; i<len; i++){
+        output[i] = array[i] * (blackman0 - blackman1 * Math.cos(2 * Math.PI * i / len) + blackman2 * Math.cos(4 * Math.PI * i /len))
+    }
+    return output
+}
+
+
+
+function doFFT(input){
+    var result = {};
+    var smoothingBuffer = dummyArray;
+    var roughnessArray = [];
+
+    // push 대신 바꾸기 
+    for (var i=0, len = fftSize - input.length % fftSize; i<len; i++){
+        input.push(0);
+    }
+    
+
+    for (var i = 0, len = input.length; i<len; i = i+fftSize){
+        var fft = new FFT(fftSize, 44100);
+        // slice -> blackman window index로 수
+        var hop = input.slice(i, i+fftSize);
+        hop = blackmanWindow(hop);
+        fft.forward(hop);
+        //fft.spectrum = smoothingFilters(fft.spectrum, 2);
+        fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
+        smoothingBuffer = fft.spectrum;
+        var peakArray = peakDetection(fft.spectrum, 50);
+
+
+        var totalRoughness = 0;
+        for (var j = 0; j < 50; j++){
+            for (var k = j+1; k < 50; k++){
+                totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
+            }
+        }
+
+        roughnessArray.push(totalRoughness);
+        //console.log(totalRoughness);
+        //fft.spectrum = conversionToDB(fft.spectrum);
+
+      
+    }
+    return roughnessArray;
+}
+*/
