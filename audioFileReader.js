@@ -384,24 +384,34 @@ function plotGraph(graph, canvas){
 
 
 	graphic_context.globalAlpha = 1;
-    graphic_context.fillStyle= "#ffffff";
+    graphic_context.fillStyle= "#000000";
     graphic_context.fillRect(0,0,canvas.width, canvas.height);
 
+    var roughnessScaled = scaling(graph.roughness)
+
+
     for(var i = 0; i<graph.value.length; i++){
+    	var density = graph.alpha[i] / audioFile.length * 10000000
+
+    	//graphic_context.setLineDash([5, Math.floor( 1/density)])
     	graphic_context.beginPath();
-   		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
+   		//graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
     	graphic_context.moveTo(i,canvas.height);
 		graphic_context.lineTo(i, -graph.value[i]);
 		
 		
-		var R = graph.roughness[i] * 100
-		
-		R = Math.round(R);
-		graphic_context.strokeStyle = hot.getColor(R).hex();
-
+		graphic_context.strokeStyle = hot.getColor(roughnessScaled[i]).hex();
     	graphic_context.lineWidth=1;
-
     	graphic_context.stroke();    
+
+    	graphic_context.beginPath();
+    	graphic_context.moveTo(i-1,graph.value[i-1]);
+		graphic_context.lineTo(i, graph.value[i]);
+		graphic_context.lineWidth= density;
+		graphic_context.strokeStyle = "#ffffff";
+		graphic_context.stroke();
+
+
 
     }
 
@@ -439,12 +449,13 @@ function drawProgress(canvas){
 	var progress = canvas.getContext("2d");
 	
 	progress.clearRect(0, 0, canvas.width, canvas.height);
-	
-	progress.fillStyle = "darkorange"
+	progress.strokeStyle = "#ffffff"
+
 	progress.beginPath();
 	progress.moveTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, 0);
     progress.lineTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, canvas.height);
     progress.lineWidth=1;
+
     progress.stroke();    
     
     if (playingOn){
@@ -605,6 +616,23 @@ function averageWindow(array, index, width){
 	}
 
 	else return array[index];
+
+}
+
+function scaling(array){
+	var minValue = 0;
+	var maxValue = 0;
+
+	for (var i = 0, len = array.length; i<len; i++){
+		if (array[i] < minValue) minValue = array[i];
+		if (array[i] > maxValue) maxValue = array[i];
+	}
+
+	var output = new Float32Array(array.length);
+        for (var i = 0, len = array.length; i<len; i++){
+            output[i] = array[i] * 300/(maxValue - minValue);
+        }
+    return output
 
 }
 
