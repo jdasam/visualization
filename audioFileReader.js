@@ -20,8 +20,6 @@ var blackman2 = blackmanAlpha/2
 
 var smoothingTimeConstant = 0.1;
 
-
-
 var dummyArray = new Array(fftSize/2);
 for (var i=0; i<fftSize/2; i++){
     dummyArray[i] = 0;
@@ -102,7 +100,7 @@ function audioFileDecoded(audioBuffer){
 	
 	//then generate volume graph with the volume array
 	
-	var graph = generateVolumeGraph(monoAudio, 1000);
+	var graph = generateVolumeGraph(monoAudio, plottingCanvasWidth);
 	plotGraph(graph, document.getElementById("plottingCanvas"));
 	//drawRoughness(roughnessArray, document.getElementById("plottingCanvas"));
 
@@ -179,10 +177,13 @@ function doMouseDown(e){
 	var rect = e.target.getBoundingClientRect();
 	var x= e.clientX-rect.left - e.target.clientLeft + e.target.scrollLeft;
 
-	canvas_x = x/1000 * audioFile.length / audioFile.sampleRate;
+	canvas_x = x/plottingCanvasWidth * audioFile.length / audioFile.sampleRate;
+	player.seekTo(canvas_x, true);
 	stop();
 	startOffset = canvas_x;
+
 	playSound(audioFile);
+
 	//재생 위치 기록
 	//userRecord.push([currentTime, canvas_x.toFixed(2)]);
 }
@@ -434,7 +435,7 @@ function drawRoughness(array, canvas){
     for(var i = 0; i<array.length; i++){
     	graphic_context.beginPath();
     	graphic_context.moveTo(i,canvas.height);
-		graphic_context.lineTo(i, canvas.height - array[i] * 1000);
+		graphic_context.lineTo(i, canvas.height - array[i] * plottingCanvasWidth);
 		graphic_context.strokeStyle="#FF0000";
     	graphic_context.lineWidth=1;
 
@@ -452,8 +453,8 @@ function drawProgress(canvas){
 	progress.strokeStyle = "#ffffff"
 
 	progress.beginPath();
-	progress.moveTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, 0);
-    progress.lineTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, canvas.height);
+	progress.moveTo(startOffset * plottingCanvasWidth /audioFile.length * audioFile.sampleRate, 0);
+    progress.lineTo(startOffset * plottingCanvasWidth /audioFile.length * audioFile.sampleRate, canvas.height);
     progress.lineWidth=1;
 
     progress.stroke();    
