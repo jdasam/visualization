@@ -12,6 +12,8 @@ var fftSize = 4096;
 var samplingRate = 44100;
 var frequencyBinSize = samplingRate/fftSize;
 
+var volumeWindowSize = 2048;
+
 
 var blackmanAlpha = 0.16
 var blackman0 = (1-blackmanAlpha)/2
@@ -30,7 +32,7 @@ var hot = new chroma.ColorScale({
     colors:['#000000', '#ff0000', '#ffff00', '#ffffff'],
     positions:[0, .25, .75, 1],
     mode:'rgb',
-    limits:[0, 300]
+    limits:[0, 255]
 });
 
 
@@ -96,7 +98,9 @@ function audioFileDecoded(audioBuffer){
 	monoAudio = audioToMono(audioBuffer)
 
 	//after the audio file decoded, call volume calculator first
-	calculateVolume(volumes, monoAudio, 2048);
+	//(output array, input array, windowSize)
+	// this function save the result into output array
+	calculateVolume(volumes, monoAudio, volumeWindowSize);
 	
 	//then generate volume graph with the volume array
 	
@@ -178,7 +182,7 @@ function doMouseDown(e){
 	var x= e.clientX-rect.left - e.target.clientLeft + e.target.scrollLeft;
 
 	canvas_x = x/plottingCanvasWidth * audioFile.length / audioFile.sampleRate;
-	player.seekTo(canvas_x, true);
+	//player.seekTo(canvas_x, true);
 	stop();
 	startOffset = canvas_x;
 
@@ -211,7 +215,6 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 
 				squareSum+= Math.pow(sampleArray[index] * 0.5 *  (1- Math.cos(2*Math.PI*i/(windowSize))),2 )
 				index++;
-
 			}
 
 			/*
@@ -238,10 +241,10 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 
 function generateVolumeGraph(floatArray, length){
 	var valueArray = new Array(length);
-	var alphaArray = new Array(length);
+	var onsetArray = new Array(length);
 	var roughnessArray = new Array(length);
 	var arrayLength = floatArray.length;
-	var samplesPerX = arrayLength/length * 20; // overlapping samples
+	var samplesPerX = Math.floor(arrayLength/length * 20); // overlapping samples
 	var offsetPerX = arrayLength/length;
 	
 	//var roughnessRaw = [];
@@ -262,79 +265,54 @@ function generateVolumeGraph(floatArray, length){
 
 	for(var i = 0; i<length; i++){
 		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
+		onsetArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 		roughnessArray[i] = averageWindow(roughnessRaw, Math.floor(i * fftWindowPerX), roughnessPerX);
 		
 	}
-	return {value:valueArray, alpha:alphaArray, roughness:roughnessArray};
+	return {value:valueArray, onset:onsetArray, roughness:roughnessArray};
 }
 
 
 function getAverageVolume(floatArray, offset, length){
 	
+
 	// 처음 시작부분 offset이 0보다 작을 때 
 	if (offset < 0){
-		//console.log(offset)
-		length = length + offset*2;
+		length = length + offset;
 		offset = 0; 
-
-
-
 	}
 
 	// 끝 부분 offset
 	if(offset+length>floatArray.length){
-		length = Math.floor(2*(floatArray.length - (offset + length/2)))
-		offset = floatArray.length - length;
+		//length = Math.floor(2*(floatArray.length - (offset + length/2)))
+		//offset = floatArray.length - length;
+
+
+		offset = offset + (offset - (floatArray.length - length) ) 
+		length = floatArray.length - offset
+
 	}
 
 
-
-	var sum = 0;
+	var sum = 0.00000000001; // in case total sum is zero
 
 	var index = offset;
 	while(index<offset+length){
 	   
-		var volumeIndex = Math.floor(index/1024) + 1;
+		var volumeIndex = Math.floor(index/(volumeWindowSize/2)) - 2;
+		if (volumeIndex > volumes.length) console.log(volumeIndex);
 		if(volumeIndex<0){ //first 1024 has no volume value;
 		}else{
-			sum+= 150*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 250;
+			sum+= volumes[volumeIndex];
 		}
-		index+=1024;
+		index+=volumeWindowSize/2;
 	}
 
-	return sum*1024/length;
 
 
-	/*
-	var squareSum = 0;
-
-	var sampleCount = 0;
-	var microSum = 0;
-	var onsetCount = 0;
-	var windowPrevious;
-	var windowCurrent;
-	var windowNext;
-	var onsetDetect = false;
-
-
-	for(var i = 0; i<length; i++){
-		if (sampleCount == 1024) {
-			sampleCount = 0;
-			if (windowCurrent > windowPrevious)
-			
-			windowPrevious = windowCurrent;
-		}
-		
-		squareSum += floatArray[offset]*floatArray[offset++];
-		sampleCount++;
-	}
-	return 180*Math.log(squareSum/length)/Math.LN10 + 220;
-	*/
+	return Math.log(sum / ( length / (volumeWindowSize/2) ))/Math.LN10;
 }
 
-
-//getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
 function getOnsetDensity(floatArray, offset, length){
 	if(offset < 0){
 		offset=0;
@@ -358,7 +336,7 @@ function getOnsetDensity(floatArray, offset, length){
 
 
 	while(index<offset+length){
-		var volumeIndex = Math.floor(index/1024)-1;
+		var volumeIndex = Math.floor(index/(volumeWindowSize/2))-1;
 		if(volumes[volumeIndex+1] > volumes[volumeIndex]){
 			increaseValue += volumes[volumeIndex+1] - volumes[volumeIndex];
 		}
@@ -371,7 +349,7 @@ function getOnsetDensity(floatArray, offset, length){
 		}
 
 
-	index += 2048;
+	index += volumeWindowSize;
 	}
 	increaseValueSave = increaseValue;
 	return onsetCount;
@@ -383,38 +361,67 @@ function plotGraph(graph, canvas){
 	var graphic_context = canvas.getContext("2d");
 	
 
-
 	graphic_context.globalAlpha = 1;
     graphic_context.fillStyle= "#000000";
     graphic_context.fillRect(0,0,canvas.width, canvas.height);
 
-    var roughnessScaled = scaling(graph.roughness)
+    var roughnessScaled = scalingRoughness(graph.roughness);
+    var volumeScaled = scalingVolume(graph.value);
+    var onsetScaled = scalingRoughness(graph.onset);
+
 
 
     for(var i = 0; i<graph.value.length; i++){
-    	var density = graph.alpha[i] / audioFile.length * 10000000
 
+		var S = onsetScaled[i]/100
+
+		//console.log(R);
+		//var L = Math.round(R/2);
     	//graphic_context.setLineDash([5, Math.floor( 1/density)])
-    	graphic_context.beginPath();
-   		//graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
-    	graphic_context.moveTo(i,canvas.height);
-		graphic_context.lineTo(i, -graph.value[i]);
-		
-		
-		graphic_context.strokeStyle = hot.getColor(roughnessScaled[i]).hex();
-    	graphic_context.lineWidth=1;
-    	graphic_context.stroke();    
+
+    	var rgb = hsv_to_rgb(0, S, 1)
+    	rgb[0] = Math.round(rgb[0]);
+    	rgb[1] = Math.round(rgb[1]);
+    	rgb[2] = Math.round(rgb[2]);
+
 
     	graphic_context.beginPath();
-    	graphic_context.moveTo(i-1,graph.value[i-1]);
-		graphic_context.lineTo(i, graph.value[i]);
-		graphic_context.lineWidth= density;
-		graphic_context.strokeStyle = "#ffffff";
+    	graphic_context.moveTo(i,canvas.height);
+    	graphic_context.lineTo(i, -volumeScaled[i]);
+    	graphic_context.strokeStyle = "rgba("+rgb[0]+", "+rgb[1]+" , "+rgb[2]+", 1)"
+    	//graphic_context.strokeStyle = "rgba(" + R + ", "+Y+" , 20, 1)"
+    	graphic_context.stroke();    
+   		//graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
+		//graphic_context.strokeStyle = hot.getColor(roughnessScaled[i]).hex();
+
+		
+
+		var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.4)
+
+    	graphic_context.beginPath();
+		graphic_context.strokeStyle = "rgba(20, 20, "+B+", 1)"
+    	graphic_context.moveTo(i, 0);
+		graphic_context.lineTo(i, -volumeScaled[i]);
 		graphic_context.stroke();
 
 
 
     }
+
+
+    /*
+    
+    for(var i = 0; i<graph.value.length; i++){
+		var B = Math.round(graph.alpha[i] / audioFile.length * 100000000);
+
+    	graphic_context.beginPath();
+		graphic_context.strokeStyle = "rgba(255, 255, 255, 1)"
+    	graphic_context.moveTo(i, 0);
+		graphic_context.lineTo(i, -volumeScaled[i] - 10);
+      	graphic_context.strokeStyle = "rgb (0 , 0 , "+B+")"
+		graphic_context.stroke();
+    }
+
 
 
     /*
@@ -426,6 +433,8 @@ function plotGraph(graph, canvas){
      
    
 }
+
+/*
 
 function drawRoughness(array, canvas){
 	var graphic_context = canvas.getContext("2d");
@@ -444,7 +453,7 @@ function drawRoughness(array, canvas){
     }
 
 }
-
+*/
 
 function drawProgress(canvas){
 	var progress = canvas.getContext("2d");
@@ -620,7 +629,7 @@ function averageWindow(array, index, width){
 
 }
 
-function scaling(array){
+function scalingRoughness(array){
 	var minValue = 0;
 	var maxValue = 0;
 
@@ -629,13 +638,59 @@ function scaling(array){
 		if (array[i] > maxValue) maxValue = array[i];
 	}
 
+    console.log(minValue);
+    console.log(maxValue);
+
+
 	var output = new Float32Array(array.length);
         for (var i = 0, len = array.length; i<len; i++){
-            output[i] = array[i] * 300/(maxValue - minValue);
+            output[i] = array[i] * 100/(maxValue - minValue);
+        }
+    return output
+}
+
+function scalingVolume(array){
+	var minValue = -1.6; // fixed
+	var maxValue = -1; // temporary value
+
+
+	// find maxvalue of array. minValue is fixed. 	
+	for (var i = 0, len = array.length; i<len; i++){
+		if (array[i] < minValue) array[i] = minValue;
+		if (array[i] > maxValue) maxValue = array[i];
+	}
+	
+
+    console.log(minValue);
+    console.log(maxValue);
+
+	var output = new Float32Array(array.length);
+        for (var i = 0, len = array.length; i<len; i++){
+            output[i] = (array[i] - maxValue) * plottingCanvasHeight/(maxValue - minValue) ;
         }
     return output
 
 }
+
+
+function hsv_to_rgb(h, s, v) {  
+    var c = v * s;  
+    var h1 = h / 60;  
+    var x = c * (1 - Math.abs((h1 % 2) - 1));  
+    var m = v - c;  
+    var rgb;  
+      
+    if (typeof h == 'undefined') rgb = [0, 0, 0];  
+    else if (h1 < 1) rgb = [c, x, 0];  
+    else if (h1 < 2) rgb = [x, c, 0];  
+    else if (h1 < 3) rgb = [0, c, x];  
+    else if (h1 < 4) rgb = [0, x, c];  
+    else if (h1 < 5) rgb = [x, 0, c];  
+    else if (h1 <= 6) rgb = [c, 0, x];  
+      
+    return [255 * (rgb[0] + m), 255 * (rgb[1] + m), 255 * (rgb[2] + m)];  
+  }   
+
 
 /*
 function blackmanWindow(array){
