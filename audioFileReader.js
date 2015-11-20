@@ -156,7 +156,7 @@ function playSound(audioBuffer) {
 	setupAudioNodes(); //이거 사실 한번만 호출해 두면 될 것 같은데...
 	startTime = audioContext.currentTime;
 	sourceNode.buffer = audioBuffer;
-	sourceNode.start(0, startOffset % audioBuffer.duration);
+	//sourceNode.start(0, startOffset % audioBuffer.duration);
 	playingOn = true;
 }
 
@@ -182,8 +182,8 @@ function doMouseDown(e){
 	var x= e.clientX-rect.left - e.target.clientLeft + e.target.scrollLeft;
 
 	canvas_x = x/plottingCanvasWidth * audioFile.length / audioFile.sampleRate;
-	//player.seekTo(canvas_x, true);
-	stop();
+	player.seekTo(canvas_x, true);
+	//stop();
 	startOffset = canvas_x;
 
 	playSound(audioFile);
@@ -365,8 +365,15 @@ function plotGraph(graph, canvas){
     graphic_context.fillStyle= "#000000";
     graphic_context.fillRect(0,0,canvas.width, canvas.height);
 
-    var roughnessScaled = scalingRoughness(graph.roughness);
     var volumeScaled = scalingVolume(graph.value);
+
+
+    for(var i = 0; i<graph.value.length; i++){
+    	graph.roughness[i] = graph.roughness[i]  / (canvas.height + volumeScaled[i] * 0.4 ) * canvas.height;
+    }
+
+
+    var roughnessScaled = scalingRoughness(graph.roughness);
     var onsetScaled = scalingRoughness(graph.onset);
 
 
@@ -396,7 +403,7 @@ function plotGraph(graph, canvas){
 
 		
 
-		var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.4)
+		var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.1)
 
     	graphic_context.beginPath();
 		graphic_context.strokeStyle = "rgba(20, 20, "+B+", 1)"
