@@ -156,7 +156,7 @@ function playSound(audioBuffer) {
 	setupAudioNodes(); //이거 사실 한번만 호출해 두면 될 것 같은데...
 	startTime = audioContext.currentTime;
 	sourceNode.buffer = audioBuffer;
-	sourceNode.start(0, startOffset % audioBuffer.duration);
+	//sourceNode.start(0, startOffset % audioBuffer.duration);
 	playingOn = true;
 }
 
@@ -182,8 +182,8 @@ function doMouseDown(e){
 	var x= e.clientX-rect.left - e.target.clientLeft + e.target.scrollLeft;
 
 	canvas_x = x/plottingCanvasWidth * audioFile.length / audioFile.sampleRate;
-	//player.seekTo(canvas_x, true);
-	stop();
+	player.seekTo(canvas_x, true);
+	//stop();
 	startOffset = canvas_x;
 
 	playSound(audioFile);
