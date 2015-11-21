@@ -650,7 +650,7 @@ function scalingRoughness(array){
 }
 
 function scalingVolume(array){
-	var minValue = -1.6; // fixed
+	var minValue = -2; // fixed
 	var maxValue = -1; // temporary value
 
 
@@ -666,7 +666,7 @@ function scalingVolume(array){
 
 	var output = new Float32Array(array.length);
         for (var i = 0, len = array.length; i<len; i++){
-            output[i] = (array[i] - maxValue) * plottingCanvasHeight/(maxValue - minValue) ;
+            output[i] = (array[i] - maxValue) * plottingCanvasHeight/(maxValue - minValue) - plottingCanvasHeight * 0.05;
         }
     return output
 

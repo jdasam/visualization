@@ -7,11 +7,9 @@
 
 </head>
 <body>
-	<div id="ytplayer"></div>
-
-	<div style="width:1000; height:200">
-	<canvas id="plottingCanvas" width="1000" height="200" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
-	<canvas id="interfaceCanvas" width="1000" height="200" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
+	<div style="width:1280; height:360">
+	<canvas id="plottingCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
+	<canvas id="interfaceCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
 	</div>
 	<div>
 	<input id="fileChooseInput" type="file"></input>
@@ -54,25 +52,7 @@ function Menu(elem) {
 }
 new Menu(document.getElementById('menu'))
 
-var tag = document.createElement('script');
-tag.src = "https://www.youtube.com/player_api";
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-// Replace the 'ytplayer' element with an <iframe> and
-// YouTube player after the API code downloads.
-
-/*
-var player;
-function onYouTubePlayerAPIReady() {
-player = new YT.Player('ytplayer', {
-  height: '390',
-  width: '1000',
-  videoId: 'NXMeMc7Vw5M',
-
-});
-}
-*/
 
 var plottingCanvasWidth = document.getElementById("plottingCanvas").width;
 var plottingCanvasHeight = document.getElementById("plottingCanvas").height;
