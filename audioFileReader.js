@@ -28,13 +28,6 @@ for (var i=0; i<fftSize/2; i++){
 }
 
 
-var hot = new chroma.ColorScale({
-    colors:['#000000', '#ff0000', '#ffff00', '#ffffff'],
-    positions:[0, .25, .75, 1],
-    mode:'rgb',
-    limits:[0, 255]
-});
-
 
 
 
