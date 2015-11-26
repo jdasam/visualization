@@ -1,11 +1,15 @@
 <html>
 <head>
+	<script src="chroma.js"></script>
 	<script src="audioFileReader.js"></script>
+	<script src="dsp.js"></script>
+
+
 </head>
 <body>
-	<div style="width:1000; height:600">
-	<canvas id="plottingCanvas" width="1000" height="600" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
-	<canvas id="interfaceCanvas" width="1000" height="600" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
+	<div style="width:1280; height:360">
+	<canvas id="plottingCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
+	<canvas id="interfaceCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
 	</div>
 	<div>
 	<input id="fileChooseInput" type="file"></input>
@@ -50,6 +54,8 @@ new Menu(document.getElementById('menu'))
 
 
 
+var plottingCanvasWidth = document.getElementById("plottingCanvas").width;
+var plottingCanvasHeight = document.getElementById("plottingCanvas").height;
 
 
 
