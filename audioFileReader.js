@@ -8,16 +8,6 @@ var increaseValueSave;
 var userRecord = [];
 var volumes = []; // volume per every window samples
 
-<<<<<<< HEAD
-var analyserNode;
-var javascriptNode;
-var sampleSize = 1024;
-var fftSize = 4096;
-var frequencyArray;
-var column = 0;
-
-var colorScale = new chroma.scale(['black', 'red', 'yellow', 'white']).out('hex');
-=======
 var fftSize = 4096;
 var samplingRate = 44100;
 var frequencyBinSize = samplingRate/fftSize;
@@ -38,7 +28,6 @@ for (var i=0; i<fftSize/2; i++){
 }
 
 
->>>>>>> master
 
 
 
@@ -58,10 +47,6 @@ if (contextClass) {
 
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 window.onload=function(){
 
 	var canvas = document.getElementById("interfaceCanvas");
@@ -96,10 +81,6 @@ function fileChanged(e){
 
 function fileLoaded(e){
 	audioContext.decodeAudioData(e.target.result, audioFileDecoded, audioFileDecodeFailed);
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 }
 
 function audioFileDecoded(audioBuffer){
@@ -107,24 +88,6 @@ function audioFileDecoded(audioBuffer){
 		stop();
 	}
 	audioFile = audioBuffer;
-<<<<<<< HEAD
-
-	//after the audio file decoded, call volume calculator first
-	calculateVolume(volumes, audioBuffer.getChannelData(0), 2048);
-
-	//then generate volume graph with the volume array
-	var graph = generateVolumeGraph(audioBuffer.getChannelData(0), 1000);
-	plotGraph(graph, document.getElementById("plottingCanvas"));
-	playSound(audioBuffer);
-	
-	var offContext = new OfflineAudioContext(2, audioFile.length, 44100);
-	console.log(audioFile.length)
-
-	//전체적으로 drawProgress 호출이 중구난방이네요. 
-	//애니메이션 구조를 좀 정리해야겠어요.
-	drawProgress(document.getElementById("interfaceCanvas"));
-	//drawSpectrogram(document.getElementById("interfaceCanvas"));
-=======
 	monoAudio = audioToMono(audioBuffer)
 
 	//after the audio file decoded, call volume calculator first
@@ -146,18 +109,14 @@ function audioFileDecoded(audioBuffer){
 	//애니메이션 구조를 좀 정리해야겠어요.
 	drawProgress(document.getElementById("interfaceCanvas"));
 	
->>>>>>> master
 }
 
 function audioFileDecodeFailed(e){
 	alert("The audio file cannot be decoded!");
 }
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> master
 function loadSound(url) {
 	var request = new XMLHttpRequest();
 	request.open('GET', url, true);
@@ -180,48 +139,18 @@ function setupAudioNodes() {
 	sourceNode = audioContext.createBufferSource();
 	// and connect to destination
 	sourceNode.connect(audioContext.destination);
-<<<<<<< HEAD
-
-	analyserNode = audioContext.createAnalyser();
-	analyserNode.smoothingTimeConstant = 0.0;
-	analyserNode.fftSize = fftSize;
-
 	
-	javascriptNode = audioContext.createScriptProcessor(sampleSize, 1, 1);
-	frequencyArray = new Uint8Array(analyserNode.frequencyBinCount);
-
-	sourceNode.connect(analyserNode);
-	analyserNode.connect(javascriptNode);
-	javascriptNode.connect(audioContext.destination);
-
-=======
-	
->>>>>>> master
 }
 
 
 //audio file playback control
 
 function playSound(audioBuffer) {
-<<<<<<< HEAD
-	setupAudioNodes();
-=======
 	setupAudioNodes(); //이거 사실 한번만 호출해 두면 될 것 같은데...
->>>>>>> master
 	startTime = audioContext.currentTime;
 	sourceNode.buffer = audioBuffer;
 	sourceNode.start(0, startOffset % audioBuffer.duration);
 	playingOn = true;
-<<<<<<< HEAD
-
-
-	javascriptNode.onaudioprocess = function () {
-	// get the Frequency Domain data for this sample
-		analyserNode.getByteFrequencyData(frequencyArray);
-	}
-
-=======
->>>>>>> master
 }
 
 function pause() {
@@ -245,12 +174,6 @@ function doMouseDown(e){
 	var rect = e.target.getBoundingClientRect();
 	var x= e.clientX-rect.left - e.target.clientLeft + e.target.scrollLeft;
 
-<<<<<<< HEAD
-	canvas_x = x/1000 * audioFile.length / audioFile.sampleRate;
-	stop();
-	startOffset = canvas_x;
-	playSound(audioFile);
-=======
 	canvas_x = x/plottingCanvasWidth * audioFile.length / audioFile.sampleRate;
 	//player.seekTo(canvas_x, true);
 	stop();
@@ -258,7 +181,6 @@ function doMouseDown(e){
 
 	playSound(audioFile);
 
->>>>>>> master
 	//재생 위치 기록
 	//userRecord.push([currentTime, canvas_x.toFixed(2)]);
 }
@@ -286,10 +208,6 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 
 				squareSum+= Math.pow(sampleArray[index] * 0.5 *  (1- Math.cos(2*Math.PI*i/(windowSize))),2 )
 				index++;
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 			}
 
 			/*
@@ -315,32 +233,6 @@ function calculateVolume(volumeArray, sampleArray, windowSize){
 }
 
 function generateVolumeGraph(floatArray, length){
-<<<<<<< HEAD
-	var valueArray = [];
-	var alphaArray = [];
-	var arrayLength = floatArray.length;
-	var samplesPerX = arrayLength/length * 20; // overlapping samples
-	var offsetPerX = arrayLength/length;
-
-	for(var i = 0; i<length; i++){
-		valueArray[i] = getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-		alphaArray[i] = getOnsetDensity(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-
-	}
-	return {value:valueArray, alpha:alphaArray};
-}
-
-function getAverageVolume(floatArray, offset, length){
-	
-	// 처음 시작부분 offset이 0보다 작을 때 
-	if (offset < 0){
-		//console.log(offset)
-		length = length + offset*2;
-		offset = 0; 
-
-
-
-=======
 	var valueArray = new Array(length);
 	var onsetArray = new Array(length);
 	var roughnessArray = new Array(length);
@@ -381,20 +273,10 @@ function getAverageVolume(floatArray, offset, length){
 	if (offset < 0){
 		length = length + offset;
 		offset = 0; 
->>>>>>> master
 	}
 
 	// 끝 부분 offset
 	if(offset+length>floatArray.length){
-<<<<<<< HEAD
-		length = Math.floor(2*(floatArray.length - (offset + length/2)))
-		offset = floatArray.length - length;
-	}
-
-
-
-	var sum = 0;
-=======
 		//length = Math.floor(2*(floatArray.length - (offset + length/2)))
 		//offset = floatArray.length - length;
 
@@ -406,53 +288,10 @@ function getAverageVolume(floatArray, offset, length){
 
 
 	var sum = 0.00000000001; // in case total sum is zero
->>>>>>> master
 
 	var index = offset;
 	while(index<offset+length){
 	   
-<<<<<<< HEAD
-		var volumeIndex = Math.floor(index/1024) + 1;
-		if(volumeIndex<0){ //first 1024 has no volume value;
-		}else{
-			sum+= 130*Math.log(volumes[volumeIndex]/(2*2048))/Math.LN10 + 280;
-		}
-		index+=1024;
-	}
-
-	return sum*1024/length;
-
-
-	/*
-	var squareSum = 0;
-
-	var sampleCount = 0;
-	var microSum = 0;
-	var onsetCount = 0;
-	var windowPrevious;
-	var windowCurrent;
-	var windowNext;
-	var onsetDetect = false;
-
-
-	for(var i = 0; i<length; i++){
-		if (sampleCount == 1024) {
-			sampleCount = 0;
-			if (windowCurrent > windowPrevious)
-			
-			windowPrevious = windowCurrent;
-		}
-		
-		squareSum += floatArray[offset]*floatArray[offset++];
-		sampleCount++;
-	}
-	return 180*Math.log(squareSum/length)/Math.LN10 + 220;
-	*/
-}
-
-
-//getAverageVolume(floatArray, Math.floor((offsetPerX*i)-samplesPerX/2), samplesPerX);
-=======
 		var volumeIndex = Math.floor(index/(volumeWindowSize/2)) - 2;
 		if (volumeIndex > volumes.length) console.log(volumeIndex);
 		if(volumeIndex<0){ //first 1024 has no volume value;
@@ -467,7 +306,6 @@ function getAverageVolume(floatArray, offset, length){
 	return Math.log(sum / ( length / (volumeWindowSize/2) ))/Math.LN10;
 }
 
->>>>>>> master
 function getOnsetDensity(floatArray, offset, length){
 	if(offset < 0){
 		offset=0;
@@ -491,11 +329,7 @@ function getOnsetDensity(floatArray, offset, length){
 
 
 	while(index<offset+length){
-<<<<<<< HEAD
-		var volumeIndex = Math.floor(index/1024)-1;
-=======
 		var volumeIndex = Math.floor(index/(volumeWindowSize/2))-1;
->>>>>>> master
 		if(volumes[volumeIndex+1] > volumes[volumeIndex]){
 			increaseValue += volumes[volumeIndex+1] - volumes[volumeIndex];
 		}
@@ -508,11 +342,7 @@ function getOnsetDensity(floatArray, offset, length){
 		}
 
 
-<<<<<<< HEAD
-	index += 2048;
-=======
 	index += volumeWindowSize;
->>>>>>> master
 	}
 	increaseValueSave = increaseValue;
 	return onsetCount;
@@ -523,27 +353,6 @@ function getOnsetDensity(floatArray, offset, length){
 function plotGraph(graph, canvas){
 	var graphic_context = canvas.getContext("2d");
 	
-<<<<<<< HEAD
-	// !!!! context.setAlpha 오류 !!!!!!
-
-	graphic_context.globalAlpha = 1;
-    graphic_context.fillStyle= "#ffffff";
-    graphic_context.fillRect(0,0,canvas.width, canvas.height);
-
-    for(var i = 0; i<graph.value.length; i++){
-    	graphic_context.beginPath();
-   		graphic_context.globalAlpha = graph.alpha[i] / audioFile.length * 400000 + 0.3;
-    	graphic_context.moveTo(i,canvas.height);
-		graphic_context.lineTo(i, -graph.value[i]);
-		    graphic_context.strokeStyle="#000000";
-    	graphic_context.lineWidth=1;
-
-    	graphic_context.stroke();    
-
-    }
-
-
-=======
 
 	graphic_context.globalAlpha = 1;
     graphic_context.fillStyle= "#000000";
@@ -608,7 +417,6 @@ function plotGraph(graph, canvas){
 
 
 
->>>>>>> master
     /*
     for(var i = 0; i<graph.length; i++){
     	context.moveTo(i,canvas.height);
@@ -619,8 +427,6 @@ function plotGraph(graph, canvas){
    
 }
 
-<<<<<<< HEAD
-=======
 /*
 
 function drawRoughness(array, canvas){
@@ -641,20 +447,11 @@ function drawRoughness(array, canvas){
 
 }
 */
->>>>>>> master
 
 function drawProgress(canvas){
 	var progress = canvas.getContext("2d");
 	
 	progress.clearRect(0, 0, canvas.width, canvas.height);
-<<<<<<< HEAD
-	
-	progress.fillStyle = "darkorange"
-	progress.beginPath();
-	progress.moveTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, 0);
-    progress.lineTo(startOffset * 1000 /audioFile.length * audioFile.sampleRate, canvas.height);
-    progress.lineWidth=1;
-=======
 	progress.strokeStyle = "#ffffff"
 
 	progress.beginPath();
@@ -662,7 +459,6 @@ function drawProgress(canvas){
     progress.lineTo(startOffset * plottingCanvasWidth /audioFile.length * audioFile.sampleRate, canvas.height);
     progress.lineWidth=1;
 
->>>>>>> master
     progress.stroke();    
     
     if (playingOn){
@@ -674,43 +470,11 @@ function drawProgress(canvas){
     
 	requestAnimFrame(function() {
 		drawProgress(document.getElementById("interfaceCanvas"))
-<<<<<<< HEAD
-		
-=======
->>>>>>> master
 	});
 }
 
 
 
-<<<<<<< HEAD
-function drawSpectrogram(canvas) {
-	var ctx = canvas.getContext("2d");
-
-	for (var i = 0; i < frequencyArray.length; i++) {
-		// Get the color from the color map, draw 1x1 pixel rectangle
-		ctx.fillStyle = colorScale(frequencyArray[i] / 256.0);
-		ctx.fillRect(column,600 - i, 1, 1);
-	}
-	// loop around the canvas when we reach the end
-	column += 1;
-	if(column >= 1000) {
-		column = 0;
-		clearCanvas(ctx);
-	}
-	requestAnimFrame(function() {
-		drawSpectrogram(document.getElementById("interfaceCanvas"))
-		
-	});
-}
-
-
-function clearCanvas(ctx) {
-	ctx.clearRect(0, 0, 1000, 600);
-}
-
-
-=======
 function doFFTforFloatArray(input){
     var result = {};
     var smoothingBuffer = dummyArray;
@@ -971,4 +735,3 @@ function doFFT(input){
     return roughnessArray;
 }
 */
->>>>>>> master
