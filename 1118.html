@@ -3,14 +3,12 @@
 	<script src="chroma.js"></script>
 	<script src="audioFileReader.js"></script>
 	<script src="dsp.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
 
 
 </head>
 <body>
-	<div style="width:1280; height:360">
-	<canvas id="plottingCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
-	<canvas id="interfaceCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
-	</div>
+
 	<div>
 	<input id="fileChooseInput" type="file"></input>
 	</div>
@@ -32,8 +30,17 @@
 		<i class="glyphicon glyphicon-play"></i>
 		Save Image
 	</button>
+	<button class="btn btn-primary" data-action="draw">
+		<i class="glyphicon glyphicon-play"></i>
+		Draw Again
+	</button>
 	</div>
 
+	Width:<input type="text" id="width"><br>
+    Height:<input type="text" id="height"><br>
+
+	<canvas id="plottingCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:1;"></canvas>
+	<canvas id="interfaceCanvas" width="1280" height="360" style="position:absolute; left:0 px; top:0 px; z-index:2;"></canvas>
 
 </body>
 
@@ -58,6 +65,32 @@ function Menu(elem) {
 
     	window.open(document.getElementById("plottingCanvas").toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream'));
     }
+
+    if (action=="draw"){
+
+    	var canvas=document.getElementById("plottingCanvas");
+    	var intCanvas = document.getElementById("interfaceCanvas");
+    	var ctx=canvas.getContext("2d");
+
+    	var width = document.getElementById('width').value
+    	var height = document.getElementById('height').value
+
+        canvas.width = width;
+        intCanvas.width = width;
+        plottingCanvasWidth = width;
+        canvas.height = height;
+        intCanvas.height = height;
+        plottingCanvasHeight = height;
+
+
+    	stop();
+    	var monoAudio = audioToMono(audioFile)
+		calculateVolume(volumes, monoAudio, volumeWindowSize);
+		var graph = generateVolumeGraph(monoAudio, plottingCanvasWidth);
+		plotGraph(graph, document.getElementById("plottingCanvas"));
+		playSound(audioFile);
+	}
+
   }
 }
 new Menu(document.getElementById('menu'))
@@ -67,6 +100,43 @@ new Menu(document.getElementById('menu'))
 var plottingCanvasWidth = document.getElementById("plottingCanvas").width;
 var plottingCanvasHeight = document.getElementById("plottingCanvas").height;
 
+
+
+$(function(){
+
+    // get a reference to the canvas and context
+
+
+    // vars for current width and height of a canvas rectangle
+    var width=1280;
+    var height=360;
+
+    // references to the input-text elements 
+    // used to let user change the rect width & height
+    var $width=document.getElementById('width');
+    var $height=document.getElementById('height')
+
+    // set the initial input-text values to the width/height vars
+    $width.value=width;
+    $height.value=height;
+
+    $width.addEventListener("keyup", function(){
+        width=this.value;
+        // canvas.width = width;
+        // intCanvas.width = width;
+        // plottingCanvasWidth = width;
+    }, false);
+
+    $height.addEventListener("keyup", function(){
+        height=this.value;
+        // canvas.height = height;
+        // intCanvas.height = height;
+        // plottingCanvasHeight = height;
+    }, false);
+
+
+
+});
 
 
 </script>
