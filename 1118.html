@@ -28,6 +28,10 @@
 		<i class="glyphicon glyphicon-play"></i>
 		Stop
 	</button>
+	<button class="btn btn-primary" data-action="saveImage">
+		<i class="glyphicon glyphicon-play"></i>
+		Save Image
+	</button>
 	</div>
 
 
@@ -47,6 +51,12 @@ function Menu(elem) {
     }
     else if(action=="stop") {
     	stop();
+    }
+    if (action=="saveImage") {
+    	var plotCanvas=document.getElementById("plottingCanvas");
+    	window.open(plotCanvas.toDataURL('image/png'));
+
+    	window.open(document.getElementById("plottingCanvas").toDataURL("image/png").replace(/^data:image\/[^;]/, 'data:application/octet-stream'));
     }
   }
 }
