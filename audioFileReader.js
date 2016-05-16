@@ -95,7 +95,7 @@ function audioFileDecoded(audioBuffer){
 		stop();
 	}
 	audioFile = audioBuffer;
-	monoAudio = audioToMono(audioBuffer)
+	var monoAudio = audioToMono(audioBuffer)
 
 	//after the audio file decoded, call volume calculator first
 	//(output array, input array, windowSize)
@@ -400,8 +400,9 @@ function plotGraph(graph, canvas){
 
     	graphic_context.beginPath();
 		graphic_context.strokeStyle = "rgba(20, 20, "+B+", 1)"
+		//graphic_context.strokeStyle = "rgba("+B+", "+B+", "+B+", 1)"
     	graphic_context.moveTo(i, 0);
-		graphic_context.lineTo(i, -volumeScaled[i]);
+		graphic_context.lineTo(i, -volumeScaled[i]-1);
 		graphic_context.stroke();
 
 
@@ -507,6 +508,15 @@ function doFFTforFloatArray(input){
                 totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
             }
         }
+
+        var spectrumSum = 0;
+        for (var j=0, fftlen=fft.spectrum.length; j<fftlen; j++){
+        	spectrumSum += fft.spectrum[j];
+        }
+
+        spectrumSum += 0.8;
+      
+        totalRoughness = totalRoughness/spectrumSum * fft.spectrum.length;
 
         roughnessArray.push(totalRoughness);
         //console.log(totalRoughness);
@@ -691,6 +701,8 @@ function hsv_to_rgb(h, s, v) {
       
     return [255 * (rgb[0] + m), 255 * (rgb[1] + m), 255 * (rgb[2] + m)];  
   }   
+
+
 
 
 /*
