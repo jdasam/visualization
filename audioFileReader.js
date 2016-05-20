@@ -27,6 +27,12 @@ var color2 = [180,1,1]
 var color3 = [0,1,1]
 var color4 = [30,1,1]
 
+
+var roughnessScaled;
+var volumeScaled;
+var onsetScaled;
+
+
 var dummyArray = new Array(fftSize/2);
 for (var i=0; i<fftSize/2; i++){
     dummyArray[i] = 0;
@@ -274,6 +280,13 @@ function generateVolumeGraph(floatArray, length){
 		roughnessArray[i] = averageWindow(roughnessRaw, Math.floor(i * fftWindowPerX), roughnessPerX);
 		
 	}
+
+	roughnessScaled = scalingRoughness(roughnessArray);
+    volumeScaled = scalingVolume(valueArray);
+    onsetScaled = scalingRoughness(onsetArray);
+
+
+
 	return {value:valueArray, onset:onsetArray, roughness:roughnessArray};
 }
 
@@ -393,11 +406,6 @@ function plotGraph(graph, canvas){
 	graphic_context.globalAlpha = 1;
     graphic_context.fillStyle= "#000";
     graphic_context.fillRect(0,0,canvas.width, canvas.height);
-
-    var roughnessScaled = scalingRoughness(graph.roughness);
-    var volumeScaled = scalingVolume(graph.value);
-    var onsetScaled = scalingRoughness(graph.onset);
-
 
 
     for(var i = 0; i<graph.value.length; i++){
@@ -710,8 +718,8 @@ function scalingRoughness(array){
 	newArray.push(0);
 	newArray.push(0);
 	array = newArray;
-    console.log(minValue);
-    console.log(maxValue);
+    //console.log(minValue);
+    //console.log(maxValue);
 
 
 	var output = new Float32Array(array.length);
@@ -733,8 +741,8 @@ function scalingVolume(array){
 	}
 	
 
-    console.log(minValue);
-    console.log(maxValue);
+    //console.log(minValue);
+    //console.log(maxValue);
 
 	var output = new Float32Array(array.length);
         for (var i = 0, len = array.length; i<len; i++){
