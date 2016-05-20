@@ -13,7 +13,7 @@ var samplingRate = 44100;
 var frequencyBinSize = samplingRate/fftSize;
 
 var volumeWindowSize = 2048;
-
+var graph;
 
 var blackmanAlpha = 0.16
 var blackman0 = (1-blackmanAlpha)/2
@@ -21,6 +21,11 @@ var blackman1 = 1/2
 var blackman2 = blackmanAlpha/2
 
 var smoothingTimeConstant = 0.1;
+
+var color1 = [0,1,1]
+var color2 = [180,1,1]
+var color3 = [0,1,1]
+var color4 = [30,1,1]
 
 var dummyArray = new Array(fftSize/2);
 for (var i=0; i<fftSize/2; i++){
@@ -104,7 +109,7 @@ function audioFileDecoded(audioBuffer){
 	
 	//then generate volume graph with the volume array
 	
-	var graph = generateVolumeGraph(monoAudio, plottingCanvasWidth);
+	graph = generateVolumeGraph(monoAudio, plottingCanvasWidth);
 	plotGraph(graph, document.getElementById("plottingCanvas"));
 	//drawRoughness(roughnessArray, document.getElementById("plottingCanvas"));
 
@@ -356,13 +361,37 @@ function getOnsetDensity(floatArray, offset, length){
 
 }
 
+function colorChanged(e){
+	if(e.target==document.getElementById("color1")){
+		var r = parseInt(e.target.value.slice(1,3),16);
+		var g = parseInt(e.target.value.slice(3,5),16);
+		var b = parseInt(e.target.value.slice(5,7),16);
+		color1 = rgb2hsv(r,g,b);
+	}else if(e.target==document.getElementById("color2")){
+		var r = parseInt(e.target.value.slice(1,3),16);
+		var g = parseInt(e.target.value.slice(3,5),16);
+		var b = parseInt(e.target.value.slice(5,7),16);
+		color2 = rgb2hsv(r,g,b);
+	}else if(e.target==document.getElementById("color3")){
+		var r = parseInt(e.target.value.slice(1,3),16);
+		var g = parseInt(e.target.value.slice(3,5),16);
+		var b = parseInt(e.target.value.slice(5,7),16);
+		color3 = rgb2hsv(r,g,b);
+	}else if(e.target==document.getElementById("color4")){
+		var r = parseInt(e.target.value.slice(1,3),16);
+		var g = parseInt(e.target.value.slice(3,5),16);
+		var b = parseInt(e.target.value.slice(5,7),16);
+		color4 = rgb2hsv(r,g,b);
+	}
+	plotGraph(graph, document.getElementById("plottingCanvas"));
+}
 
 function plotGraph(graph, canvas){
 	var graphic_context = canvas.getContext("2d");
 	
 
 	graphic_context.globalAlpha = 1;
-    graphic_context.fillStyle= "#000000";
+    graphic_context.fillStyle= "#000";
     graphic_context.fillRect(0,0,canvas.width, canvas.height);
 
     var roughnessScaled = scalingRoughness(graph.roughness);
@@ -379,15 +408,16 @@ function plotGraph(graph, canvas){
 		//var L = Math.round(R/2);
     	//graphic_context.setLineDash([5, Math.floor( 1/density)])
 
-    	var rgb = hsv_to_rgb(0, S, 1)
+
+    	var rgb = hsv_to_rgb((color2[0] + (color1[0]-color2[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
     	rgb[0] = Math.round(rgb[0]);
     	rgb[1] = Math.round(rgb[1]);
     	rgb[2] = Math.round(rgb[2]);
 
 
     	graphic_context.beginPath();
-    	graphic_context.moveTo(i,canvas.height);
-    	graphic_context.lineTo(i, -volumeScaled[i]);
+    	graphic_context.moveTo(i+0.5,canvas.height);
+    	graphic_context.lineTo(i+0.5, -volumeScaled[i]);
     	graphic_context.strokeStyle = "rgba("+rgb[0]+", "+rgb[1]+" , "+rgb[2]+", 1)"
     	//graphic_context.strokeStyle = "rgba(" + R + ", "+Y+" , 20, 1)"
     	graphic_context.stroke();    
@@ -396,20 +426,34 @@ function plotGraph(graph, canvas){
 
 		
 
-		var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.4)
+		//var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.4)
+		S= roughnessScaled[i] / 100;
+    	rgb = hsv_to_rgb((color4[0] + (color3[0]-color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+    	rgb[0] = Math.round(rgb[0]);
+    	rgb[1] = Math.round(rgb[1]);
+    	rgb[2] = Math.round(rgb[2]);
+
 
     	graphic_context.beginPath();
-		graphic_context.strokeStyle = "rgba(20, 20, "+B+", 1)"
+    	graphic_context.strokeStyle = "rgba("+rgb[0]+", "+rgb[1]+" , "+rgb[2]+", 1)"
+		//graphic_context.strokeStyle = "rgba("+(280 - B)+", "+(280 - B)+", 255, 1)"
 		//graphic_context.strokeStyle = "rgba("+B+", "+B+", "+B+", 1)"
-    	graphic_context.moveTo(i, 0);
-		graphic_context.lineTo(i, -volumeScaled[i]-1);
+    	graphic_context.moveTo(i+0.5, 0);
+		graphic_context.lineTo(i+0.5, -volumeScaled[i]-1);
 		graphic_context.stroke();
 
 
 
     }
-
-
+    graphic_context.beginPath();
+ 	graphic_context.strokeStyle = '#D6A12E';
+ 	graphic_context.lineWidth = 3;
+ 	graphic_context.lineJoin = 'round';
+    graphic_context.moveTo(0,canvas.height-volumeScaled[0]);
+    for (var i = 0;i<volumeScaled.length; i++){
+    	graphic_context.lineTo(i,-volumeScaled[i]);
+    }
+    graphic_context.stroke();
 
     /*
     
@@ -649,6 +693,23 @@ function scalingRoughness(array){
 		if (array[i] > maxValue) maxValue = array[i];
 	}
 
+	var localSum = 0;
+	var newArray = [];
+	newArray.push(0);
+	newArray.push(0);
+
+	for(var i = 0; i<5; i++){
+		localSum += array[i];
+	}
+	newArray.push(localSum/5);
+	for(var i = 5; i<array.length; i++){
+		localSum +=	array[i];
+		localSum-= array[i-5];
+		newArray.push(localSum/5);
+	}
+	newArray.push(0);
+	newArray.push(0);
+	array = newArray;
     console.log(minValue);
     console.log(maxValue);
 
@@ -702,7 +763,29 @@ function hsv_to_rgb(h, s, v) {
     return [255 * (rgb[0] + m), 255 * (rgb[1] + m), 255 * (rgb[2] + m)];  
   }   
 
+function rgb2hsv (r,g,b) {
+	var computedH = 0;
+	var computedS = 0;
+	var computedV = 0; 
 
+	r=r/255; g=g/255; b=b/255;
+	var minRGB = Math.min(r,Math.min(g,b));
+	var maxRGB = Math.max(r,Math.max(g,b));
+
+	// Black-gray-white
+	if (minRGB==maxRGB) {
+	computedV = minRGB;
+	return [0,0,computedV];
+	}
+
+	// Colors other than black-gray-white:
+	var d = (r==minRGB) ? g-b : ((b==minRGB) ? r-g : b-r);
+	var h = (r==minRGB) ? 3 : ((b==minRGB) ? 1 : 5);
+	computedH = 60*(h - d/(maxRGB - minRGB));
+	computedS = (maxRGB - minRGB)/maxRGB;
+	computedV = maxRGB;
+	return [computedH,computedS,computedV];
+}
 
 
 /*
