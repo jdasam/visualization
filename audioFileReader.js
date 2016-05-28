@@ -449,7 +449,17 @@ function plotGraph(graph, canvas){
 
 		//var B = Math.round(roughnessScaled[i] / 100 * 255 * 1.4)
 		S= roughnessScaled[i] / 100;
-    	rgb = hsv_to_rgb((color4[0] + (color3[0]-color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+		if ( color3[0] > color4[0] && color3[0] - color4[0] <= 180) {
+    		var rgb = hsv_to_rgb((color4[0] + (color3[0]-color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+    	}else if(color3[0] > color4[0] && color3[0] - color4[0] > 180 ) {
+    		var rgb = hsv_to_rgb((color4[0] +360 - (color4[0] +360 - color3[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+    	}else if( color3[0] < color4[0] && color4[0] - color3[0] < 180 ) {
+    		var rgb = hsv_to_rgb((color4[0] + (color3[0]-color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+    	}else if( color3[0] < color4[0] && color4[0] - color3[0] >= 180 ) {
+    		var rgb = hsv_to_rgb((color4[0] + (color3[0] +360 - color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
+    	}
+
+    	//rgb = hsv_to_rgb((color4[0] + (color3[0]-color4[0]) * S)%360, (color4[1] + (color3[1]-color4[1])*S) , (color4[2]+ (color3[2]-color4[2])*S) )
     	rgb[0] = Math.round(rgb[0]);
     	rgb[1] = Math.round(rgb[1]);
     	rgb[2] = Math.round(rgb[2]);
