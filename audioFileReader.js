@@ -395,7 +395,9 @@ function colorChanged(e){
 		var g = parseInt(e.target.value.slice(3,5),16);
 		var b = parseInt(e.target.value.slice(5,7),16);
 		color4 = rgb2hsv(r,g,b);
+	}else if(e.target==document.getElementById("color5")){
 	}
+
 	plotGraph(graph, document.getElementById("plottingCanvas"));
 }
 
@@ -416,8 +418,19 @@ function plotGraph(graph, canvas){
 		//var L = Math.round(R/2);
     	//graphic_context.setLineDash([5, Math.floor( 1/density)])
 
+    	if ( color1[0] > color2[0] && color1[0] - color2[0] <= 180) {
+    		var rgb = hsv_to_rgb((color2[0] + (color1[0]-color2[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
+    	}else if(color1[0] > color2[0] && color1[0] - color2[0] > 180 ) {
+    		var rgb = hsv_to_rgb((color2[0] +360 - (color2[0] +360 - color1[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
+    	}else if( color1[0] < color2[0] && color2[0] - color1[0] < 180 ) {
+    		var rgb = hsv_to_rgb((color2[0] + (color1[0]-color2[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
+    	}else if( color1[0] < color2[0] && color2[0] - color1[0] >= 180 ) {
+    		var rgb = hsv_to_rgb((color2[0] + (color1[0] +360 - color2[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
+    	}
 
-    	var rgb = hsv_to_rgb((color2[0] + (color1[0]-color2[0]) * S)%360, (color2[1] + (color1[1]-color2[1])*S) , (color2[2]+ (color1[2]-color2[2])*S) )
+
+
+
     	rgb[0] = Math.round(rgb[0]);
     	rgb[1] = Math.round(rgb[1]);
     	rgb[2] = Math.round(rgb[2]);
@@ -454,7 +467,7 @@ function plotGraph(graph, canvas){
 
     }
     graphic_context.beginPath();
- 	graphic_context.strokeStyle = '#D6A12E';
+ 	graphic_context.strokeStyle = document.getElementById("color5").value;
  	graphic_context.lineWidth = 3;
  	graphic_context.lineJoin = 'round';
     graphic_context.moveTo(0,canvas.height-volumeScaled[0]);

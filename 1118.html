@@ -3,12 +3,16 @@
 	<script src="chroma.js"></script>
 	<script src="audioFileReader.js"></script>
 	<script src="dsp.js"></script>
+    <!-- 
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="bootstrap.min.js"></script>
+ -->
+    
 	<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
-    <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-    <!-- Latest compiled JavaScript -->
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-
+   
 </head>
 
 <style>
@@ -80,6 +84,13 @@
     margin-bottom: 10px;
 }
 
+#colorInput{
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+
+
 /*#plottingCanvas{
 
     position:relative;
@@ -146,10 +157,14 @@
 		<i class="glyphicon glyphicon-refresh"></i>
 		Draw Again
 	</button>
+    </div>
+    <div align="center" id ="colorInput">
     <input type="color" id="color1" onchange="colorChanged(event)">
     <input type="color" id="color2" onchange="colorChanged(event)">
     <input type="color" id="color3" onchange="colorChanged(event)">
     <input type="color" id="color4" onchange="colorChanged(event)">
+    <input type="color" id="color5" onchange="colorChanged(event)">
+
 	</div>
 
     <div align="center" id ="canvasSizeInput">
@@ -254,6 +269,7 @@ $(function(){
     document.getElementById('color2').value= "#3f0700";
     document.getElementById('color3').value= "#abfcc3";
     document.getElementById('color4').value= "#010102";
+    document.getElementById('color5').value= "#E3D0A1";
 
     color1 = stringToHSV(document.getElementById('color1').value);
     color2 = stringToHSV(document.getElementById('color2').value);
