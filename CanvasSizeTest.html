@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" media="all" href="css/reset.css" /> <!-- reset css -->
+<script type="text/javascript" src="http://code.jquery.com/jquery.min.js"></script>
+<style>
+    body{ background-color: white; }
+    canvas{border:2px solid red;}
+</style>
+<script>
+$(function(){
+
+    // get a reference to the canvas and context
+    var canvas=document.getElementById("canvas");
+    var ctx=canvas.getContext("2d");
+
+    // vars for current width and height of a canvas rectangle
+    var width=50;
+    var height=35;
+
+    // references to the input-text elements 
+    // used to let user change the rect width & height
+    var $width=document.getElementById('width');
+    var $height=document.getElementById('height')
+
+    // set the initial input-text values to the width/height vars
+    $width.value=width;
+    $height.value=height;
+
+    // call the draw command
+    draw();
+
+    // listen for keyup events on width & height input-text elements
+    // Get the current values from input-text & set the width/height vars
+    // call draw to redraw the rect with the current width/height values
+    $width.addEventListener("keyup", function(){
+        width=this.value;
+        draw();
+    }, false);
+
+    $height.addEventListener("keyup", function(){
+        height=this.value;
+        draw();
+    }, false);
+
+
+    // draw() clears the canvas and redraws the rect
+    // based on user input
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillRect(40,40,width,height);
+    }
+
+}); // end $(function(){});
+</script>
+</head>
+<body>
+    Width:<input type="text" id="width"><br>
+    height:<input type="text" id="height"><br>
+    <canvas id="canvas" width=600 height=600></canvas>
+</body>
+</html>
