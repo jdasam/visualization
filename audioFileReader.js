@@ -73,7 +73,7 @@ window.onload=function(){
 	var control = document.getElementById("fileChooseInput");
 	control.addEventListener("change", fileChanged, false);
 
-	audioContext = new AudioContext();
+	audioContext = new contextClass();
 
 }
 
